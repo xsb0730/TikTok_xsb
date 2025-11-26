@@ -39,39 +39,57 @@ class GridVideoAdapter(private val context: Context,
             ivLikeCount.text=formatLikeCount(video.likeCount)
 
             //点击整个卡片跳转
+            root.setOnClickListener {
+                onItemClick(video, holder.bindingAdapterPosition)
+            }
 
             //点击头像跳转
+            ivAvatar.setOnClickListener {
+                onAvatarClick(video, holder.bindingAdapterPosition)
+            }
 
             //点击点赞区域
-
+            ivLike.setOnClickListener {
+                onLikeClick(video, holder.bindingAdapterPosition)
+            }
         }
-
-
     }
 
     //加载视频封面（第一帧）
     private fun loadVideoCover(video: VideoBean, holder: GridVideoViewHolder){
-        Glide.with(context)
-            .asBitmap()
-            .load(video.videoRes)
-            .apply(
-                RequestOptions()
-                .frame(0)
-                .placeholder(R.drawable.cover1)//占位图
-                .error(R.drawable.cover1)//加载失败时的错误图
-            )
-            .into(holder.binding.ivCover)
+        if (video.coverRes != 0) {
+
+            Glide.with(context)
+                .load(video.coverRes)
+                .placeholder(R.drawable.loading)
+                .error(R.drawable.default_error)
+                .into(holder.binding.ivCover)
+        } else {
+
+            Glide.with(context)
+                .asBitmap()
+                .load(video.videoRes)
+                .apply(
+                    RequestOptions()
+                        .frame(0)
+                        .placeholder(R.drawable.loading)
+                        .error(R.drawable.default_error)
+                )
+                .into(holder.binding.ivCover)
+        }
     }
 
     //加载作者头像
     private fun loadAuthorAvatar(video: VideoBean, holder: GridVideoViewHolder){
+        val headId = video.userBean?.headId ?: 0
+
         Glide.with(context)
             //优先显示视频所属用户的自定义头像，若用户信息不存在、头像为空或无效，则显示默认头像
-            .load(video.userBean?.headId?:R.drawable.default_avatar)
-            .placeholder(R.drawable.cover1)
-            .error(R.drawable.cover1)
+            .load(if (headId != 0) headId else R.mipmap.default_avatar)
+            .placeholder(R.mipmap.default_avatar)
+            .error(R.mipmap.default_avatar)
             .circleCrop()                   //将加载的头像裁剪为圆形
-            .into(holder.binding.ivAvatar)//将加载的头像显示到ImageView中
+            .into(holder.binding.ivAvatar)  //将加载的头像显示到ImageView中
     }
 
     //格式化点赞数量

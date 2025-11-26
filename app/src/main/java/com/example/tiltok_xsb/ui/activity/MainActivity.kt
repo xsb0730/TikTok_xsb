@@ -22,7 +22,7 @@ class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding
         fragments.add(mainFragment)
         pagerAdapter= CommPagerAdapter(supportFragmentManager,lifecycle,fragments, arrayOf(""))
 
-        binding.viewPager!!.adapter=pagerAdapter
+        binding.viewPager.adapter=pagerAdapter
 
         setupBackPressed()
     }

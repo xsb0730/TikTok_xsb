@@ -34,7 +34,7 @@
             tools:ignore="DiscouragedApi,LockedOrientationActivity"
             android:exported="false"/>
 
-        <activity android:name=".ui.activity.PlayListActivity"
+        <activity android:name=".ui.activity.VideoPlayActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"

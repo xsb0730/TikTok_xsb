@@ -19,7 +19,14 @@ class IconFontTextView : AppCompatTextView {
     }
 
     init {
-        Companion.typeface = Typeface.createFromAsset(context.assets, "iconfont.ttf")
-        typeface = Companion.typeface
+        try {
+            // 尝试加载字体文件
+            val typeface = Typeface.createFromAsset(context.assets, "iconfont.ttf")
+            setTypeface(typeface)
+        } catch (e: Exception) {
+            // 如果字体文件不存在，打印警告但不崩溃
+            e.printStackTrace()
+            // 使用默认字体
+        }
     }
 }

@@ -38,6 +38,26 @@ class VideoRemoteDataSource {
         }
     }
 
+    //收藏视频
+    suspend fun collectVideo(videoId: Int): Result<Boolean> {
+        return try {
+            delay(300)
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    //取消收藏
+    suspend fun uncollectVideo(videoId: Int): Result<Boolean> {
+        return try {
+            delay(300)
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     //关注用户
     suspend fun followUser(userId: Int): Result<Boolean> {
         return try {

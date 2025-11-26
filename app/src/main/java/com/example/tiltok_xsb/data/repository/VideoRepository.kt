@@ -56,6 +56,28 @@ class VideoRepository(
     }
 
     /**
+     * 收藏/取消收藏
+     */
+    suspend fun toggleCollect(video: VideoBean): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val result = if (video.isCollected) {
+                    remoteDataSource.uncollectVideo(video.videoId)
+                } else {
+                    remoteDataSource.collectVideo(video.videoId)
+                }
+
+                if (result.isSuccess) {
+                    localDataSource.updateCollectStatus(video.videoId, !video.isCollected)
+                }
+                result
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
      * 关注用户
      */
     suspend fun followUser(userId: Int): Result<Boolean> {

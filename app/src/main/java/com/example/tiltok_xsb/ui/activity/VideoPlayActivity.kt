@@ -2,14 +2,18 @@ package com.example.tiltok_xsb.ui.activity
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tiltok_xsb.base.BaseBindingActivity
 import com.example.tiltok_xsb.databinding.ActivityVideoPlayBinding
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.adapter.VideoPlayAdapter
+import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 import com.example.tiltok_xsb.utils.FullScreenUtil
 
 class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityVideoPlayBinding.inflate(it)}) {
+    private val viewModel: VideoPlayViewModel by viewModels()
     private var videoPlayAdapter:VideoPlayAdapter?=null
     private var currentPosition:Int=0
     private var videoList:ArrayList<VideoBean>?=null
@@ -38,12 +42,12 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
         setupViewPager()
         setupClickListeners()
-
+        observeViewModel()
     }
 
     private fun setupViewPager(){
         videoList?.let{list->
-            videoPlayAdapter= VideoPlayAdapter(list)
+            videoPlayAdapter= VideoPlayAdapter(list,viewModel)
             binding.viewPager.adapter=videoPlayAdapter
             binding.viewPager.orientation=ViewPager2.ORIENTATION_VERTICAL
             binding.viewPager.offscreenPageLimit=1
@@ -70,6 +74,33 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         //返回按钮
         binding.ivBack.setOnClickListener {
             finish()
+        }
+    }
+
+    private fun observeViewModel() {
+        // 观察点赞结果
+        viewModel.likeResult.observe(this) { (position, isLiked) ->
+            videoPlayAdapter?.updateLikeStatus(position, isLiked)
+        }
+
+        // 观察收藏结果
+        viewModel.collectResult.observe(this) { (position, isCollected) ->
+            videoPlayAdapter?.updateCollectStatus(position, isCollected)
+        }
+
+        // 观察关注结果
+        viewModel.followResult.observe(this) { (position, isFollowed) ->
+            videoPlayAdapter?.updateFollowStatus(position, isFollowed)
+        }
+
+        // 观察错误信息
+        viewModel.errorMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+
+        // 观察成功信息
+        viewModel.successMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
 

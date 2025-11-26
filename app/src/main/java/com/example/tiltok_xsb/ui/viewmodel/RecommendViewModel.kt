@@ -12,8 +12,12 @@ import kotlinx.coroutines.launch
 
 class RecommendViewModel(private val repository: VideoRepository= VideoRepository()):ViewModel() {
 
+
     private val _videoList = MutableLiveData<Resource<List<VideoBean>>>()
     val videoList: LiveData<Resource<List<VideoBean>>> = _videoList
+
+    private val _loadMoreResult = MutableLiveData<Resource<List<VideoBean>>>()
+    val loadMoreResult: LiveData<Resource<List<VideoBean>>> = _loadMoreResult
 
     private val _likeResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isLiked>
     val likeResult: LiveData<Pair<Int, Boolean>> = _likeResult
@@ -23,6 +27,7 @@ class RecommendViewModel(private val repository: VideoRepository= VideoRepositor
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
+
 
     private var currentPage = 1
     private val pageSize = 20
@@ -54,12 +59,19 @@ class RecommendViewModel(private val repository: VideoRepository= VideoRepositor
     //加载更多
     fun loadMore(){
         viewModelScope.launch {
+            _loadMoreResult.value = Resource.Loading()
+
             val result=repository.getRecommendVideos(currentPage,pageSize)
             if(result.isSuccess){
-                val videos=result.getOrNull()?: emptyList()
-                allVideos.addAll(videos)
-                _videoList.value=Resource.Success(allVideos.toList())
-                currentPage++
+                val newVideos = result.getOrNull() ?: emptyList()
+
+                if (newVideos.isNotEmpty()) {
+                    allVideos.addAll(newVideos)
+                    _loadMoreResult.value = Resource.Success(newVideos) // 只返回新数据
+                    currentPage++
+                } else {
+                    _loadMoreResult.value = Resource.Error("没有更多数据了")
+                }
 
             }else{
                 _errorMessage.value="加载失败"
