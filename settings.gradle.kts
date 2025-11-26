@@ -3,8 +3,10 @@ pluginManagement {
         // 配置插件仓库（用于下载Gradle插件，如Android、Kotlin插件）
         maven { url = uri("https://mirrors.cloud.tencent.com/maven/") }
         maven { url = uri("https://mirrors.cloud.tencent.com/gradle/") }
+        maven { url = uri("https://jitpack.io")}
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 dependencyResolutionManagement {
@@ -13,7 +15,7 @@ dependencyResolutionManagement {
         // 优先国内镜像，替代官方源
         maven { url = uri("https://mirrors.cloud.tencent.com/maven/") }
         maven { url = uri("https://mirrors.cloud.tencent.com/gradle/") }
-        google() // 保留官方仓库兜底
+        google()
         mavenCentral()
     }
 }

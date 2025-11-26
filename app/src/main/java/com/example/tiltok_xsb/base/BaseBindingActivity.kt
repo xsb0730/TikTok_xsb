@@ -1,0 +1,30 @@
+package com.example.tiltok_xsb.base
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import androidx.viewbinding.ViewBinding
+
+abstract class BaseBindingActivity<VB : ViewBinding>(
+    val block: (LayoutInflater) -> VB
+) : BaseActivity() {
+
+    //私有可空的 ViewBinding 实例
+    private var _binding: VB? = null
+
+    //对外暴露的非空 ViewBinding 访问器
+    protected val binding: VB
+        get() = requireNotNull(_binding) { "The property of binding has been destroyed." }
+
+    //重写 Activity 的 onCreate 方法，初始化 ViewBinding 并设置布局
+    override fun onCreate(savedInstanceState: Bundle?) {
+        _binding = block(layoutInflater)
+        setContentView(binding.root)
+        super.onCreate(savedInstanceState)
+    }
+
+    //重写 Activity 的 onDestroy 方法，清理 ViewBinding 实例，防止内存泄漏
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
+}
