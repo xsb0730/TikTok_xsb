@@ -117,38 +117,16 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
                 scrollToTop(tab?.position?:0)
             }
         })
-
-
-
     }
 
     //滚动到顶部
     private fun scrollToTop(position:Int){
-        when (position) {
-            0 -> {
-                // 团购页滚动到顶部
-                (groupBuyFragment as? IScrollToTop)?.scrollToTop()
-            }
-            1 -> {
-                // 经验页滚动到顶部
-                (experienceFragment as? IScrollToTop)?.scrollToTop()
-            }
-            2 -> {
-                // 同城页滚动到顶部
-                (sameCityFragment as? IScrollToTop)?.scrollToTop()
-            }
-            3 -> {
-                // 关注页滚动到顶部
-                (followFragment as? IScrollToTop)?.scrollToTop()
-            }
-            4 -> {
-                // 商场页滚动到顶部
-                (mallFragment as? IScrollToTop)?.scrollToTop()
-            }
-            5 -> {
-                // 推荐页滚动到顶部
-                (recommendFragment as? IScrollToTop)?.scrollToTop()
-            }
+        val tag = "f$position"
+        val fragment = childFragmentManager.findFragmentByTag(tag)
+
+        // 检查 Fragment 是否存在且已添加
+        if (fragment is IScrollToTop && fragment.isAdded && !fragment.isDetached) {
+            fragment.scrollToTop()
         }
     }
 

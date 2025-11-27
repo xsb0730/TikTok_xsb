@@ -178,7 +178,20 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     }
 
     override fun scrollToTop() {
-        binding.recyclerView.smoothScrollToPosition(0)
+        // 添加生命周期检查
+        if (!isAdded || isDetached) {
+            return
+        }
+
+        // 使用 try-catch 防止崩溃
+        try {
+            binding.recyclerView.smoothScrollToPosition(0)
+        } catch (e: IllegalArgumentException) {
+            // binding 已被销毁，忽略
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onDestroyView() {

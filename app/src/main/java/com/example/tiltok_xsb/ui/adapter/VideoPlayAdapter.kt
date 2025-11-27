@@ -14,6 +14,7 @@ import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 
+
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
     private val viewModel: VideoPlayViewModel
@@ -61,6 +62,9 @@ class VideoPlayAdapter(
 
                 setupClickListeners(video, position)
                 setupVideoPlayer(video)
+
+                // 设置双击点赞动画监听
+                setupLikeAnimationView(video, position)
             }
 
             //保存ViewHolder
@@ -159,21 +163,22 @@ class VideoPlayAdapter(
                     togglePlayPause()
                 }
 
-                // 视频点击（单击暂停/双击点赞）
-                var lastClickTime = 0L
-                videoView.setOnClickListener {
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastClickTime < 300) {
-                        // 双击点赞
-                        if (!video.isLiked) {
-                            viewModel.toggleLike(video, position)
-                            playLikeAnimation()
-                        }
-                    } else {
-                        // 单击暂停/播放
-                        togglePlayPause()
+            }
+        }
+
+        // 设置双击点赞动画视图的监听
+        private fun setupLikeAnimationView(video: VideoBean, position: Int) {
+            with(binding.likeAnimationView) {
+                // 双击点赞
+                setOnLikeListener {
+                    if (!video.isLiked) {
+                        viewModel.toggleLike(video, position)
                     }
-                    lastClickTime = currentTime
+                }
+
+                // 单击播放/暂停
+                setOnPlayPauseListener {
+                    togglePlayPause()
                 }
             }
         }
@@ -192,6 +197,7 @@ class VideoPlayAdapter(
 
                 videoView.setOnErrorListener { _, what, extra ->
                     progressBar.visibility = View.GONE
+                    android.util.Log.e("VideoPlayAdapter", "视频加载失败: what=$what, extra=$extra, path=${video.videoRes}")
                     Toast.makeText(
                         videoView.context,
                         "视频加载失败 (错误码: $what-$extra)",
@@ -208,14 +214,6 @@ class VideoPlayAdapter(
 
 
 
-
-        //点赞动画播放
-        private fun playLikeAnimation() {
-            with(binding.likeAnimationView) {
-                setAnimation(R.raw.like_animation)
-                playAnimation()
-            }
-        }
 
         //切换播放/暂停
         private fun togglePlayPause() {
@@ -291,9 +289,6 @@ class VideoPlayAdapter(
         fun updateLikeState(isLiked: Boolean) {
             currentVideo.isLiked = isLiked
             updateUIState(currentVideo)
-            if (isLiked) {
-                playLikeAnimation()
-            }
         }
 
         //更新收藏状态

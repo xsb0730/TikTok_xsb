@@ -6,6 +6,11 @@
     <string name="icon_like_border">&#xe60b;</string>
     <!--评论-->
     <string name="icon_comment">&#xe621;</string>
+    <!-- 收藏/未收藏 -->
+    <string name="icon_collect">&#xe614;</string>
+    <string name="icon_collect_fill">&#xe623;</string>
+    <!-- 分享 -->
+    <string name="icon_share">&#xe622;</string>
     <!-- 微博 -->
     <string name="icon_weibo">&#xe620;</string>
     <!-- 微信 -->
