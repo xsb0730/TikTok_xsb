@@ -86,6 +86,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         // 观察收藏结果
         viewModel.collectResult.observe(this) { (position, isCollected) ->
             videoPlayAdapter?.updateCollectStatus(position, isCollected)
+            android.util.Log.d("VideoPlayActivity", "收藏更新 - position: $position, isCollected: $isCollected")
         }
 
         // 观察关注结果

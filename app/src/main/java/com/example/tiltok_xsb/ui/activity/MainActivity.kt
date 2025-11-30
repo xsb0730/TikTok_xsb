@@ -10,8 +10,6 @@ import com.example.tiltok_xsb.databinding.ActivityMainBinding
 import com.example.tiltok_xsb.ui.fragment.MainFragment
 
 class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding.inflate(it)}) {
-    private var pagerAdapter:CommPagerAdapter?=null
-    private val fragments=ArrayList<Fragment>()
 
     private val mainFragment= MainFragment()
 
@@ -19,10 +17,9 @@ class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding
     private val EXIT_TIME=2000
 
     override fun init() {
-        fragments.add(mainFragment)
-        pagerAdapter= CommPagerAdapter(supportFragmentManager,lifecycle,fragments, arrayOf(""))
-
-        binding.viewPager.adapter=pagerAdapter
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, mainFragment)
+            .commit()
 
         setupBackPressed()
     }

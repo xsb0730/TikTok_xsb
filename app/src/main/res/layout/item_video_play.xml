@@ -26,9 +26,19 @@
         android:id="@+id/like_animation_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginRight="90dp"
+        android:layout_marginRight="60dp"
         android:layout_marginBottom="110dp"
         android:layout_marginTop="60dp"/>
+
+    <!-- 暂停图标 -->
+    <ImageView
+        android:id="@+id/iv_pause"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_centerInParent="true"
+        android:src="@mipmap/ic_pause"
+        android:visibility="gone"
+        android:alpha="0.8"/>
 
     <!-- 加载中 -->
     <ProgressBar
@@ -74,7 +84,8 @@
         <RelativeLayout
             android:id="@+id/rl_like"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp">
 
             <!--点赞按钮-->
             <com.example.tiltok_xsb.ui.view.IconFontTextView
@@ -86,12 +97,6 @@
                 android:layout_centerInParent="true"
                 android:text="@string/icon_like_fill" />
 
-            <!--点赞动画-->
-            <com.airbnb.lottie.LottieAnimationView
-                android:id="@+id/like_animationView_small"
-                android:layout_width="85dp"
-                android:layout_height="85dp"
-                />
         </RelativeLayout>
 
         <!--点赞数量-->
@@ -102,7 +107,7 @@
             tools:text="22.5w"
             android:textSize="12sp"
             android:textColor="@color/white"
-            android:layout_marginTop="-22dp"/>
+            android:layout_marginTop="2dp"/>
 
         <!--评论按钮-->
         <com.example.tiltok_xsb.ui.view.IconFontTextView

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.base.CommPagerAdapter
@@ -18,6 +19,8 @@ import com.example.tiltok_xsb.utils.RxBus
 import com.google.android.material.tabs.TabLayout
 
 class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBinding.inflate(it)}) {
+    val videoPlayStateLiveData = MutableLiveData<Boolean>()
+
     private var groupBuyFragment:GroupBuyFragment? = null
     private var experienceFragment:ExperienceFragment? = null
     private var sameCityFragment:SameCityFragment? = null
@@ -65,6 +68,10 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         //预加载所有页面
         binding.viewPager.offscreenPageLimit=6
 
+        // 启用 ViewPager2 的滑动
+        binding.viewPager.isUserInputEnabled = true
+
+
         //关联TabLayout与ViewPager2
         tabLayoutMediator= TabLayoutMediator(
             binding.tabTitle,
@@ -82,12 +89,11 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
                 tabView?.gravity = Gravity.CENTER
             }
             binding.viewPager.setCurrentItem(5, false)
+
+            //默认选中推荐页
+            videoPlayStateLiveData.value = true
         }
 
-        //默认选中推荐页
-        binding.viewPager.post{
-            binding.viewPager.setCurrentItem(5,false)
-        }
 
         //监听页面切换
         binding.viewPager.registerOnPageChangeCallback(object :ViewPager2.OnPageChangeCallback(){
@@ -98,10 +104,10 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
                 when(position){
                     5->{
-                        RxBus.getDefault().post(PauseVideoEvent(true))
+                        videoPlayStateLiveData.value = true
                     }
                     else->{
-                        RxBus.getDefault().post(PauseVideoEvent(false))
+                        videoPlayStateLiveData.value = false
                     }
                 }
             }
@@ -117,6 +123,13 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
                 scrollToTop(tab?.position?:0)
             }
         })
+    }
+
+    //切换到指定 Tab
+    fun switchTab(position: Int) {
+        if (position in 0 until fragments.size) {
+            binding.viewPager.setCurrentItem(position, true)  // true = 平滑滚动
+        }
     }
 
     //滚动到顶部
@@ -209,7 +222,3 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         var curPage = 5
     }
 }
-
-
-
-

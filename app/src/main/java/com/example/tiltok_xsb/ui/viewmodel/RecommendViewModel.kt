@@ -1,6 +1,5 @@
 package com.example.tiltok_xsb.ui.viewmodel
 
-import androidx.compose.material3.TabPosition
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -22,11 +21,17 @@ class RecommendViewModel(private val repository: VideoRepository= VideoRepositor
     private val _likeResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isLiked>
     val likeResult: LiveData<Pair<Int, Boolean>> = _likeResult
 
+    private val _collectResult = MutableLiveData<Pair<Int, Boolean>>()
+    val collectResult: LiveData<Pair<Int, Boolean>> = _collectResult
+
     private val _followResult = MutableLiveData<Pair<Int, Boolean>>() // <userId, isFollowed>
     val followResult: LiveData<Pair<Int, Boolean>> = _followResult
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
+
+    private val _successMessage = MutableLiveData<String>()
+    val successMessage: LiveData<String> = _successMessage
 
 
     private var currentPage = 1
@@ -84,6 +89,7 @@ class RecommendViewModel(private val repository: VideoRepository= VideoRepositor
         viewModelScope.launch {
             val result = repository.toggleLike(video)
             if (result.isSuccess) {
+
                 video.isLiked = !video.isLiked
                 if (video.isLiked) {
                     video.likeCount++
@@ -91,6 +97,29 @@ class RecommendViewModel(private val repository: VideoRepository= VideoRepositor
                     video.likeCount--
                 }
                 _likeResult.value = Pair(position, video.isLiked)
+            } else {
+                _errorMessage.value = "操作失败"
+            }
+        }
+    }
+
+    // 收藏/取消收藏
+    fun toggleCollect(video: VideoBean, position: Int) {
+        viewModelScope.launch {
+            val result = repository.toggleCollect(video)
+            if (result.isSuccess) {
+
+                video.isCollected = !video.isCollected
+
+                if (video.isCollected) {
+                    video.collectCount++
+                } else {
+                    video.collectCount--
+                }
+
+                _collectResult.value = Pair(position, video.isCollected)
+
+                _successMessage.value = if (video.isCollected) "已收藏" else "取消收藏"
             } else {
                 _errorMessage.value = "操作失败"
             }

@@ -15,8 +15,9 @@ class DataCreate {
         videoBean1.distance = 5f
         videoBean1.userBean?.isFollowed = false
         videoBean1.isLiked = false
-        videoBean1.likeCount = 100000
-        videoBean1.commentCount = 1000
+        videoBean1.likeCount = 666
+        videoBean1.commentCount = 444
+        videoBean1.collectCount = 500
         videoBean1.shareCount = 500
 
         val userBean1 = UserBean()
@@ -41,8 +42,9 @@ class DataCreate {
         videoBean2.distance = 5f
         videoBean2.userBean?.isFollowed = false
         videoBean2.isLiked = false
-        videoBean2.likeCount = 100000
-        videoBean2.commentCount = 1000
+        videoBean2.likeCount = 777
+        videoBean2.commentCount = 444
+        videoBean2.collectCount = 500
         videoBean2.shareCount = 500
 
         val userBean2 = UserBean()

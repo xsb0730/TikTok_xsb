@@ -48,8 +48,16 @@ class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository
     fun toggleCollect(video: VideoBean, position: Int) {
         viewModelScope.launch {
             val result = repository.toggleCollect(video)
+
             if (result.isSuccess) {
                 video.isCollected = !video.isCollected
+
+                if (video.isCollected) {
+                    video.collectCount++
+                } else {
+                    video.collectCount--
+                }
+
                 _collectResult.value = Pair(position, video.isCollected)
                 _successMessage.value = if (video.isCollected) "已收藏" else "取消收藏"
             } else {

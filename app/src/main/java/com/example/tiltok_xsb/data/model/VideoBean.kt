@@ -15,6 +15,7 @@ data class VideoBean(
     var distance: Float = 0f,           // 距离
     var likeCount: Int = 0,
     var commentCount: Int = 0,
+    var collectCount: Int =0,
     var shareCount: Int = 0,
 
     var userBean: UserBean? = null

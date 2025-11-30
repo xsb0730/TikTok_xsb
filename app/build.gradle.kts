@@ -1,9 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
-    id("kotlin-android")
+    id("com.google.devtools.ksp")
     id("kotlin-parcelize")
+
 }
 
 android {
@@ -73,7 +73,8 @@ dependencies {
     implementation(libs.glide.core)
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.media3.datasource)  // Glide核心库
-    kapt(libs.glide.compiler)
+    ksp("androidx.room:room-compiler:2.6.0")
+    ksp("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.google.android.material:material:1.11.0")
     implementation("io.reactivex.rxjava2:rxjava:2.2.21")
     implementation("io.reactivex.rxjava2:rxandroid:2.1.1")

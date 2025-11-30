@@ -104,24 +104,33 @@ class VideoPlayAdapter(
         private fun updateUIState(video: VideoBean) {
             with(binding) {
                 // 点赞状态
-                ivLike.text = if (video.isLiked) {
-                    ivLike.context.getString(R.string.icon_like_fill)
-                } else {
-                    ivLike.context.getString(R.string.icon_like_border)
-                }
+                ivLike.text = ivLike.context.getString(R.string.icon_like_fill)
                 ivLike.setTextColor(
                     if (video.isLiked) {
-                        ivLike.context.getColor(R.color.red)
+                        ivLike.context.getColor(R.color.red)      // 已点赞：红色
                     } else {
-                        ivLike.context.getColor(R.color.white)
+                        ivLike.context.getColor(R.color.white)    // 未点赞：白色
+                    }
+                )
+
+                //收藏状态
+                ivCollect.text = ivCollect.context.getString(R.string.icon_collect)
+                ivCollect.setTextColor(
+                    if (video.isCollected) {
+                        ivCollect.context.getColor(R.color.yellow)  // 已收藏：黄色
+                    } else {
+                        ivCollect.context.getColor(R.color.white)   // 未收藏：白色
                     }
                 )
 
                 // 数字
                 tvLikecount.text = formatCount(video.likeCount)
                 tvCommentcount.text = formatCount(video.commentCount)
-                tvCollectcount.text = formatCount(0) // 暂无收藏数
+                tvCollectcount.text = formatCount(video.collectCount)
                 tvSharecount.text = formatCount(video.shareCount)
+
+                //调试日志
+                android.util.Log.d("VideoPlayAdapter", "更新 UI - 收藏状态: ${video.isCollected}, 收藏数量: ${video.collectCount}")
             }
         }
 
@@ -192,6 +201,7 @@ class VideoPlayAdapter(
                     mp.isLooping = true
                     progressBar.visibility = View.GONE
                     ivCover.visibility = View.GONE
+                    hidePauseIcon()
                     isVideoPlaying = true
                 }
 
@@ -221,13 +231,38 @@ class VideoPlayAdapter(
                 if (isPlaying) {
                     pause()
                     pauseRecordAnimation()
+                    showPauseIcon()
                     isVideoPlaying = false
                 } else {
                     start()
                     startRecordAnimation()
+                    hidePauseIcon()
                     isVideoPlaying = true
                 }
             }
+        }
+
+        // 显示暂停图标
+        private fun showPauseIcon() {
+            binding.ivPause.visibility = View.VISIBLE
+            //添加淡入动画
+            binding.ivPause.alpha = 0f
+            binding.ivPause.animate()
+                .alpha(0.8f)
+                .setDuration(200)
+                .start()
+        }
+
+        // 隐藏暂停图标
+        private fun hidePauseIcon() {
+            //添加淡出动画
+            binding.ivPause.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction {
+                    binding.ivPause.visibility = View.GONE
+                }
+                .start()
         }
 
         //播放
@@ -235,6 +270,7 @@ class VideoPlayAdapter(
             binding.progressBar.visibility = View.VISIBLE
             binding.videoView.start()
             startRecordAnimation()
+            hidePauseIcon()
             isVideoPlaying = true
         }
 
@@ -242,6 +278,7 @@ class VideoPlayAdapter(
         fun pause() {
             binding.videoView.pause()
             pauseRecordAnimation()
+            showPauseIcon()
             isVideoPlaying = false
         }
 
@@ -249,6 +286,7 @@ class VideoPlayAdapter(
         fun release() {
             binding.videoView.stopPlayback()
             stopRecordAnimation()
+            binding.ivPause.visibility = View.GONE
             isVideoPlaying = false
         }
 

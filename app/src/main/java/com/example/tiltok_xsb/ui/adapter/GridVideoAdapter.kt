@@ -101,10 +101,6 @@ class GridVideoAdapter(private val context: Context,
         }
     }
 
-    //点击卡片跳转到播放页
-
-    //点击作者区域跳转到作者页面
-
     //更新指定位置的点赞状态
     fun updateLikeStatus(position: Int, isLiked: Boolean) {
         mList.getOrNull(position)?.let { video ->
@@ -113,7 +109,6 @@ class GridVideoAdapter(private val context: Context,
         }
     }
 
-    //点赞动画效果
 
     inner class GridVideoViewHolder(val binding: ItemGridvideoBinding) : RecyclerView.ViewHolder(binding.root) {
 

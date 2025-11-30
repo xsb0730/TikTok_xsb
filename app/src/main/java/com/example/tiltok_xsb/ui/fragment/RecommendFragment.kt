@@ -13,18 +13,20 @@ import com.example.tiltok_xsb.ui.activity.VideoPlayActivity
 import com.example.tiltok_xsb.ui.adapter.GridVideoAdapter
 import com.example.tiltok_xsb.ui.viewmodel.RecommendViewModel
 import com.example.tiltok_xsb.utils.Resource
+import com.example.tiltok_xsb.utils.SwipeGestureHelper
+
 
 class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({FragmentRecommendBinding.inflate(it)}), IScrollToTop {
 
     private val viewModel:RecommendViewModel by viewModels()            //by viewModels()确保屏幕旋转时数据不丢失，生命周期自动管理
-
     //双列列表适配器
     private var adapter:GridVideoAdapter? = null
-
     //是否正在加载
     private var isLoading=false
     //是否是首次加载
     private var isFirstLoad = true
+    //手势检测器
+    private var swipeGestureHelper: SwipeGestureHelper? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -33,13 +35,15 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         setRefreshEvent()
         setupLoadMore()
         observeViewModel()
+        setupSwipeGesture()
 
         viewModel.loadRecommendVideos(isRefresh = true)
 
     }
-    
+
+    //设置双列瀑布流布局
     private fun initRecyclerView(){
-        //设置双列瀑布流布局
+
         binding.recyclerView.layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
 
         //初始化适配器并绑定数据
@@ -65,6 +69,23 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         binding.recyclerView.adapter=adapter
         binding.recyclerView.setHasFixedSize(true)
     }
+
+    //设置滑动手势
+    private fun setupSwipeGesture() {
+        swipeGestureHelper = SwipeGestureHelper(
+            context = requireContext(),
+            onSwipeLeft = {
+                // 推荐页（position = 5）已是最后一页
+                Toast.makeText(context, "已经是最后一页了", Toast.LENGTH_SHORT).show()
+            },
+            onSwipeRight = {
+                // 向右滑动，切换到商场页（position = 4）
+                (parentFragment as? MainFragment)?.switchTab(4)
+            }
+        )
+        swipeGestureHelper?.attachToRecyclerView(binding.recyclerView)
+    }
+
 
     //下拉刷新
     private fun setRefreshEvent(){
@@ -107,10 +128,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         viewModel.videoList.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // 首次加载显示刷新动画（如果不是下拉刷新触发的）
-                    if (!binding.refreshLayout.isRefreshing) {
-                        // 可以显示一个加载框
-                    }
+                    // 首次加载（不是下拉刷新触发的）
                 }
                 is Resource.Success -> {
                     binding.refreshLayout.isRefreshing = false
@@ -137,7 +155,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         viewModel.loadMoreResult.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // 可以显示底部加载指示器
+                    // 显示底部加载指示器
                 }
                 is Resource.Success -> {
                     isLoading = false  //  加载完成，恢复状态
@@ -196,6 +214,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
 
     override fun onDestroyView() {
         super.onDestroyView()
+        swipeGestureHelper = null
         adapter = null
     }
 }
