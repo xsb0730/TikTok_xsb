@@ -2,10 +2,8 @@ package com.example.tiltok_xsb.ui.activity
 
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.fragment.app.Fragment
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingActivity
-import com.example.tiltok_xsb.base.CommPagerAdapter
 import com.example.tiltok_xsb.databinding.ActivityMainBinding
 import com.example.tiltok_xsb.ui.fragment.MainFragment
 

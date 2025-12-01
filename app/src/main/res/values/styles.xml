@@ -58,4 +58,20 @@
         <item name="android:layout_gravity">center</item>
     </style>
 
+    <!-- BottomSheetDialog 主题 -->
+    <style name="BottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
+        <!-- 指定 BottomSheet 的样式 -->
+        <item name="bottomSheetStyle">@style/BottomSheetStyle</item>
+        <!-- 背景遮罩层透明度 -->
+        <item name="android:backgroundDimAmount">0.5</item>
+        <!-- 点击外部是否可关闭 -->
+        <item name="android:windowCloseOnTouchOutside">true</item>
+    </style>
+
+    <!-- BottomSheet 样式 -->
+    <style name="BottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
+        <!-- 背景设为透明 -->
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
 </resources>

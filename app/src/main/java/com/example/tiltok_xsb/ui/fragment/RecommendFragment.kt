@@ -152,6 +152,8 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
             }
         }
 
+
+        // 加载更多结果
         viewModel.loadMoreResult.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {

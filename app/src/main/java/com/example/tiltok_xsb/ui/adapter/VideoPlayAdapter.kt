@@ -17,7 +17,8 @@ import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
-    private val viewModel: VideoPlayViewModel
+    private val viewModel: VideoPlayViewModel,
+    private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
     private var currentPlayingPosition = -1
@@ -144,7 +145,7 @@ class VideoPlayAdapter(
 
                 // 评论
                 ivComment.setOnClickListener {
-                    Toast.makeText(it.context, "评论功能待实现", Toast.LENGTH_SHORT).show()
+                    onCommentClick?.invoke(video, position)
                 }
 
                 // 收藏
@@ -394,6 +395,8 @@ class VideoPlayAdapter(
     }
 
     fun onPageSelected(position: Int) {
+        android.util.Log.d("VideoPlayAdapter", "onPageSelected 调用: position=$position")
+
         if (currentPlayingPosition != -1 && currentPlayingPosition != position) {
             videoHolders[currentPlayingPosition]?.pause()
         }

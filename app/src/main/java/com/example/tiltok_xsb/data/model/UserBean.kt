@@ -10,7 +10,7 @@ data class UserBean(
     var headId: Int = 0,                // 头像ID
     var sign: String? = null,           // 个性签名
 
-    var isFollowed: Boolean = false,     // 是否关注
+    var isFollowed: Boolean = false,    // 是否关注
     var subCount: Int = 0,              // 获赞数量
     var focusCount: Int = 0,            // 关注数量
     var fansCount: Int = 0,             // 粉丝数

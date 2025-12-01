@@ -40,7 +40,10 @@ class GridVideoAdapter(private val context: Context,
 
             //点击整个卡片跳转
             root.setOnClickListener {
-                onItemClick(video, holder.bindingAdapterPosition)
+                val currentPosition = holder.bindingAdapterPosition
+                if (currentPosition != RecyclerView.NO_POSITION) {
+                    onItemClick(video, currentPosition)
+                }
             }
 
             //点击头像跳转

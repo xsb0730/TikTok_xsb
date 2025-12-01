@@ -72,7 +72,8 @@ dependencies {
     implementation("com.geyifeng.immersionbar:immersionbar:3.2.2") // ImmersionBar 核心库
     implementation(libs.glide.core)
     implementation(libs.androidx.viewpager2)
-    implementation(libs.androidx.media3.datasource)  // Glide核心库
+    implementation(libs.androidx.media3.datasource)
+    implementation(libs.androidx.lifecycle.common.jvm)  // Glide核心库
     ksp("androidx.room:room-compiler:2.6.0")
     ksp("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.google.android.material:material:1.11.0")
