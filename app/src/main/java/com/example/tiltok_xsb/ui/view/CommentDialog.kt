@@ -28,14 +28,14 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 class CommentDialog(
     context: Context,
     private val videoId:Int,
-    private val viewModelStoreOwner: ViewModelStoreOwner
+    private val viewModelStoreOwner: ViewModelStoreOwner,
+    private val onCommentCountChanged: ((Int) -> Unit)? = null
 ) :BottomSheetDialog(context, R.style.BottomSheetDialogTheme), LifecycleOwner{
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private lateinit var binding: DialogCommentBinding
     private lateinit var viewModel: CommentViewModel
     private var adapter: CommentAdapter? = null
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,10 +49,11 @@ class CommentDialog(
         viewModel = ViewModelProvider(viewModelStoreOwner)[CommentViewModel::class.java]
 
         setupDialog()
+        setupWindowInsets()
         setupRecyclerView()
         setupInputArea()
         observeViewModel()
-        setupWindowInsets()
+
 
         // 加载评论列表
         Log.d("CommentDialog", "开始加载评论，videoId: $videoId")
@@ -82,20 +83,23 @@ class CommentDialog(
 
             // 从底部弹出
             setGravity(Gravity.BOTTOM)
-
             // 背景透明（避免白色边框）
             setBackgroundDrawableResource(android.R.color.transparent)
 
-            // 让软键盘推动输入框上移
+            // 让内容延伸到系统栏下方
             WindowCompat.setDecorFitsSystemWindows(this, false)
+
+            // 设置导航栏透明
+            WindowCompat.getInsetsController(this, decorView).apply {
+                // 设置导航栏为浅色模式（可选）
+                isAppearanceLightNavigationBars = false
+            }
         }
-        // 允许拖拽关闭
-        behavior.isDraggable = true
 
         // 设置弹窗完全展开
         behavior.apply {
             state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-            isDraggable = true     //可拖拽
+            isDraggable = true     //可拖拽关闭
             skipCollapsed = true   // 跳过折叠状态
 
             // 设置为屏幕高度
@@ -121,6 +125,10 @@ class CommentDialog(
     //设置输入框
     private fun setupInputArea() {
         with(binding) {
+
+            // 设置输入框提示文字
+            etInput.setHint(R.string.comment_input_hint)
+
             // 输入框获得焦点时，自动滚动到底部
             etInput.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
@@ -143,7 +151,7 @@ class CommentDialog(
                     etInput.setText("")                // 清空输入框
                     hideKeyboard()                     // 隐藏键盘
                 } else {
-                    Toast.makeText(context, "请输入评论内容", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.comment_empty, Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -161,55 +169,43 @@ class CommentDialog(
 
     //监听数据变化
     private fun observeViewModel() {
-        Log.d("CommentDialog", "observeViewModel 开始监听")
         viewModel.commentList.observe(this) { resource ->
-            Log.d("CommentDialog", "收到数据更新: ${resource.javaClass.simpleName}")
-
             when (resource) {
                 is Resource.Loading -> {
                     // 显示加载中
                     Log.d("CommentDialog", "加载中...")
                 }
+
                 is Resource.Success -> {
                     resource.data?.let { comments ->
-                        Log.d("CommentDialog", "加载成功，评论数量: ${comments.size}")
 
                         adapter?.submitList(comments)
-                        binding.tvTitle.text = "${comments.size}条评论"            // 更新标题
+                        binding.tvTitle.text = context.getString(R.string.comment_count_format, comments.size)       // 更新标题
+                        onCommentCountChanged?.invoke(comments.size)
 
-                        Log.d("CommentDialog", "数据已提交到 Adapter")
                     }
                 }
-                is Resource.Error -> {
-                    Log.e("CommentDialog", "加载失败: ${resource.message}")
 
+                is Resource.Error -> {
                     Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
                 }
+
             }
         }
 
         viewModel.publishResult.observe(this) { resource ->
-            Log.d("CommentDialog", "发布结果: ${resource.javaClass.simpleName}")
 
             when (resource) {
                 is Resource.Loading -> {
                     // 显示发布中
                 }
                 is Resource.Success -> {
-                    Log.d("CommentDialog", "发布成功")
-
-                    Toast.makeText(context, "评论成功", Toast.LENGTH_SHORT).show()
-
                     // 滚动到顶部，显示新评论
                     binding.recyclerView.postDelayed({
                         binding.recyclerView.smoothScrollToPosition(0)
-
-                        Log.d("CommentDialog", "滚动到顶部")
                     }, 100)
                 }
                 is Resource.Error -> {
-                    Log.e("CommentDialog", "发布失败: ${resource.message}")
-
                     Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -222,16 +218,28 @@ class CommentDialog(
 
     // 处理软键盘插入
     private fun setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            // 获取系统栏和键盘的 insets
+            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
-            // 软键盘弹出时，调整底部内边距
-            view.updatePadding(
-                bottom = imeInsets.bottom.coerceAtLeast(systemBarsInsets.bottom)
-            )
+            // 使用最大值（键盘弹出时用键盘高度，否则用导航栏高度）
+            val bottomInset = maxOf(systemBarsInsets.bottom, imeInsets.bottom)
 
-            insets
+            // 动态设置输入框底部内边距
+            binding.layoutInput.updatePadding(bottom = bottomInset)
+
+            // 键盘弹出时，自动滚动到底部
+            if (imeInsets.bottom > 0) {
+                binding.recyclerView.postDelayed({
+                    val itemCount = adapter?.itemCount ?: 0
+                    if (itemCount > 0) {
+                        binding.recyclerView.smoothScrollToPosition(itemCount - 1)
+                    }
+                }, 100)
+            }
+
+            WindowInsetsCompat.CONSUMED
         }
     }
 

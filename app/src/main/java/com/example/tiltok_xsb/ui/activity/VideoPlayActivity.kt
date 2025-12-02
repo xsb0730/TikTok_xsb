@@ -40,7 +40,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         FullScreenUtil.setFullScreen(this)
 
         //获取传递的数据
-        videoList=intent.getParcelableArrayListExtra(KEY_VIDEO_LIST)
+        videoList=intent.getParcelableArrayListExtraCompat<VideoBean>(KEY_VIDEO_LIST)
         currentPosition=intent.getIntExtra(KEY_POSITION,0)
 
         setupViewPager()
@@ -54,7 +54,9 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             videoPlayAdapter= VideoPlayAdapter(
                 list,
                 viewModel,
-                { video, position -> showCommentDialog(video) }
+                onCommentClick = { video, position ->
+                    showCommentDialog(video, position)
+                }
             )
 
 
@@ -137,14 +139,34 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     }
 
     // 显示评论弹窗
-    private fun showCommentDialog(video: VideoBean) {
-        Log.d("VideoPlayActivity", "showCommentDialog 调用")
+    private fun showCommentDialog(video: VideoBean, position: Int) {
+        // 暂停当前视频
+        videoPlayAdapter?.pauseCurrentVideo()
 
         val commentDialog = CommentDialog(
             context = this,
             videoId = video.videoId,
-            viewModelStoreOwner = this
+            viewModelStoreOwner = this,
+
+            // 传入评论数变化的回调
+            onCommentCountChanged = { newCount ->
+
+                // 更新 VideoBean 中的评论数
+                videoList?.getOrNull(position)?.let {
+                    it.commentCount = newCount
+                }
+
+                // 更新 Adapter 中的显示
+                videoPlayAdapter?.updateCommentCount(position, newCount)
+            }
         )
+
+        // 弹窗关闭时恢复视频播放
+        commentDialog.setOnDismissListener {
+            Log.d("VideoPlayActivity", "评论弹窗关闭")
+            videoPlayAdapter?.resumeCurrentVideo()
+        }
+
         commentDialog.show()
     }
 

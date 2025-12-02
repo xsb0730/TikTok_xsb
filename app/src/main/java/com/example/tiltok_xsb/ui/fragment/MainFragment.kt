@@ -12,20 +12,14 @@ import androidx.viewpager2.widget.ViewPager2
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.base.CommPagerAdapter
 import com.example.tiltok_xsb.databinding.FragmentMainBinding
-import com.example.tiltok_xsb.utils.PauseVideoEvent
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlin.collections.ArrayList
-import com.example.tiltok_xsb.utils.RxBus
 import com.google.android.material.tabs.TabLayout
 
 class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBinding.inflate(it)}) {
     val videoPlayStateLiveData = MutableLiveData<Boolean>()
 
-    private var groupBuyFragment:GroupBuyFragment? = null
-    private var experienceFragment:ExperienceFragment? = null
     private var sameCityFragment:SameCityFragment? = null
-    private var followFragment:FollowFragment? = null
-    private var mallFragment:MallFragment? = null
     private var recommendFragment:RecommendFragment? = null
 
     private val fragments=ArrayList<Fragment>()
@@ -42,18 +36,12 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
     //设置顶部Tab和ViewPager2
     private fun setFragment(){
-        groupBuyFragment=GroupBuyFragment()
-        experienceFragment=ExperienceFragment()
+
         sameCityFragment=SameCityFragment()
-        followFragment=FollowFragment()
-        mallFragment=MallFragment()
         recommendFragment=RecommendFragment()
 
-        fragments.add(groupBuyFragment!!)
-        fragments.add(experienceFragment!!)
+
         fragments.add(sameCityFragment!!)
-        fragments.add(followFragment!!)
-        fragments.add(mallFragment!!)
         fragments.add(recommendFragment!!)
 
         //设置适配器
@@ -61,12 +49,12 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
             childFragmentManager,
             viewLifecycleOwner.lifecycle,
             fragments,
-            arrayOf("团购","经验","同城","关注","商场","推荐")
+            arrayOf("同城","推荐")
         )
         binding.viewPager.adapter=pagerAdapter
 
         //预加载所有页面
-        binding.viewPager.offscreenPageLimit=6
+        binding.viewPager.offscreenPageLimit=1
 
         // 启用 ViewPager2 的滑动
         binding.viewPager.isUserInputEnabled = true
@@ -88,7 +76,7 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
                 val tabView = (tab?.view as? ViewGroup)?.getChildAt(1) as? TextView
                 tabView?.gravity = Gravity.CENTER
             }
-            binding.viewPager.setCurrentItem(5, false)
+            binding.viewPager.setCurrentItem(1, false)
 
             //默认选中推荐页
             videoPlayStateLiveData.value = true
@@ -102,12 +90,14 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
                 curPage=position
 
-                when(position){
-                    5->{
-                        videoPlayStateLiveData.value = true
-                    }
-                    else->{
+                when (position) {
+                    0 -> {
+                        // 同城页：暂停视频
                         videoPlayStateLiveData.value = false
+                    }
+                    1 -> {
+                        // 推荐页：播放视频
+                        videoPlayStateLiveData.value = true
                     }
                 }
             }
@@ -209,16 +199,12 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         tabLayoutMediator?.detach()
         tabLayoutMediator=null
         pagerAdapter=null
-        groupBuyFragment=null
-        experienceFragment=null
         sameCityFragment=null
-        followFragment=null
-        mallFragment=null
         recommendFragment=null
     }
 
     companion object {
-        // 当前页码（默认推荐页，索引为5）
-        var curPage = 5
+        // 当前页码（默认推荐页，索引为1）
+        var curPage = 1
     }
 }

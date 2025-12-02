@@ -1,6 +1,9 @@
 package com.example.tiltok_xsb.base
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import androidx.viewbinding.ViewBinding
 
@@ -26,5 +29,35 @@ abstract class BaseBindingActivity<VB : ViewBinding>(
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    //兼容新旧 API 的 getParcelableExtra
+    protected inline fun <reified T : Parcelable> Intent.getParcelableExtraCompat(key: String): T? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getParcelableExtra(key, T::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getParcelableExtra(key) as? T
+        }
+    }
+
+    //容新旧 API 的 getParcelableArrayListExtra
+    protected inline fun <reified T : Parcelable> Intent.getParcelableArrayListExtraCompat(key: String): ArrayList<T>? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getParcelableArrayListExtra(key, T::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getParcelableArrayListExtra(key)
+        }
+    }
+
+    //兼容新旧 API 的 getSerializableExtra
+    protected inline fun <reified T : java.io.Serializable> Intent.getSerializableExtraCompat(key: String): T? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getSerializableExtra(key, T::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getSerializableExtra(key) as? T
+        }
     }
 }

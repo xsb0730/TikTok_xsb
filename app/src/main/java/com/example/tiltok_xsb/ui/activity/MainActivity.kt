@@ -1,18 +1,27 @@
 package com.example.tiltok_xsb.ui.activity
 
+import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingActivity
 import com.example.tiltok_xsb.databinding.ActivityMainBinding
 import com.example.tiltok_xsb.ui.fragment.MainFragment
+import com.example.tiltok_xsb.utils.DataCreate
 
 class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding.inflate(it)}) {
 
     private val mainFragment= MainFragment()
 
     private var lastTime:Long=0
-    private val EXIT_TIME=2000
+    private val exitTime=2000
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // 初始化数据
+        initializeData()
+    }
 
     override fun init() {
         supportFragmentManager.beginTransaction()
@@ -22,11 +31,21 @@ class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding
         setupBackPressed()
     }
 
+     //初始化数据
+    private fun initializeData() {
+        try {
+            DataCreate()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "数据初始化失败: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
     //双击退出
     private fun setupBackPressed(){
         onBackPressedDispatcher.addCallback(this,object :OnBackPressedCallback(true){
             override fun handleOnBackPressed() {
-                if(System.currentTimeMillis()-lastTime>EXIT_TIME){
+                if(System.currentTimeMillis()-lastTime>exitTime){
                     Toast.makeText(applicationContext,"再按一次退出",Toast.LENGTH_SHORT).show()
                     lastTime=System.currentTimeMillis()
                 }else{
@@ -34,9 +53,5 @@ class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding
                 }
             }
         })
-    }
-
-    companion object{
-        var curMainPage=0
     }
 }

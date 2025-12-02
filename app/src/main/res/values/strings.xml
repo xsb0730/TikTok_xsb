@@ -1,6 +1,20 @@
 <resources>
     <string name="app_name">tiltok_xsb</string>
 
+    <!-- ========== 用户相关 ========== -->
+    <string name="user_nickname_format">\@%s</string>
+    <string name="default_user_name">抖音用户xxx</string>
+    <string name="enter_user_home">进入用户主页</string>
+
+    <!-- ========== 评论相关 ========== -->
+    <string name="comment_count_format">%d条评论</string>
+    <string name="comment_input_hint">善语结善缘，恶言伤人心</string>
+    <string name="comment_send">发送</string>
+    <string name="comment_empty">请输入评论内容</string>
+    <string name="comment_publish_success">发布成功</string>
+    <string name="comment_publish_failed">发布失败: %s</string>
+    <string name="comment_load_failed">加载失败: %s</string>
+
     <!-- 点赞 -->
     <string name="icon_like_fill">&#xe60d;</string>
     <!--评论-->

@@ -2,6 +2,7 @@ package com.example.tiltok_xsb.ui.fragment
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.databinding.FragmentSameCityBinding
 import com.example.tiltok_xsb.utils.SwipeGestureHelper
@@ -19,12 +20,11 @@ class SameCityFragment : BaseBindingFragment<FragmentSameCityBinding>({FragmentS
         swipeGestureHelper = SwipeGestureHelper(
             context = requireContext(),
             onSwipeLeft = {
-                // 向左滑动，切换到关注页（position = 3）
-                (parentFragment as? MainFragment)?.switchTab(3)
+                // 向左滑动，切换到推荐页
+                (parentFragment as? MainFragment)?.switchTab(1)
             },
             onSwipeRight = {
-                // 向右滑动，切换到经验页（position = 1）
-                (parentFragment as? MainFragment)?.switchTab(1)
+                Toast.makeText(context, "已经是第一页了", Toast.LENGTH_SHORT).show()
             }
         )
         swipeGestureHelper?.attachToRecyclerView(binding.recyclerView)

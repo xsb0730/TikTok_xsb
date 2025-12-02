@@ -49,12 +49,12 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         //初始化适配器并绑定数据
         adapter= GridVideoAdapter(
             context=requireContext(),
-            onItemClick = {video,position->
+            onItemClick = { _, position->
                 // 点击卡片跳转到全屏播放
                 val videoList = viewModel.getCurrentVideoList()
                 VideoPlayActivity.start(requireContext(), videoList, position)
             },
-            onAvatarClick = { video, position ->
+            onAvatarClick = { video, _ ->
                 // 点击头像跳转到作者页面
                 Toast.makeText(context, "进入 ${video.userBean?.nickName} 的主页", Toast.LENGTH_SHORT).show()
 
@@ -75,12 +75,12 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         swipeGestureHelper = SwipeGestureHelper(
             context = requireContext(),
             onSwipeLeft = {
-                // 推荐页（position = 5）已是最后一页
+                // 推荐页已是最后一页
                 Toast.makeText(context, "已经是最后一页了", Toast.LENGTH_SHORT).show()
             },
             onSwipeRight = {
-                // 向右滑动，切换到商场页（position = 4）
-                (parentFragment as? MainFragment)?.switchTab(4)
+                // 向右滑动，切换到同城页
+                (parentFragment as? MainFragment)?.switchTab(0)
             }
         )
         swipeGestureHelper?.attachToRecyclerView(binding.recyclerView)
@@ -185,7 +185,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         }
 
         // 观察关注结果
-        viewModel.followResult.observe(viewLifecycleOwner) { (userId, isFollowed) ->
+        viewModel.followResult.observe(viewLifecycleOwner) { (_, isFollowed) ->
             if (isFollowed) {
                 Toast.makeText(context, "已关注", Toast.LENGTH_SHORT).show()
             }

@@ -51,7 +51,9 @@ class VideoPlayAdapter(
 
 
                 //设置文字信息
-                tvNickname.text = "@${video.userBean?.nickName ?: "抖音用户"}"
+                val nickname = video.userBean?.nickName
+                    ?: root.context.getString(R.string.default_user_name)
+                tvNickname.text = root.context.getString(R.string.user_nickname_format, nickname)
                 tvTitle.text = video.content ?: ""
 
                 //设置统计数据
@@ -129,9 +131,6 @@ class VideoPlayAdapter(
                 tvCommentcount.text = formatCount(video.commentCount)
                 tvCollectcount.text = formatCount(video.collectCount)
                 tvSharecount.text = formatCount(video.shareCount)
-
-                //调试日志
-                android.util.Log.d("VideoPlayAdapter", "更新 UI - 收藏状态: ${video.isCollected}, 收藏数量: ${video.collectCount}")
             }
         }
 
@@ -342,6 +341,13 @@ class VideoPlayAdapter(
             binding.ivFollow.visibility = if (isFollowed) View.GONE else View.VISIBLE
         }
 
+        //更新评论数显示
+        fun updateCommentCount(count: Int) {
+            currentVideo.commentCount = count
+            binding.tvCommentcount.text = formatCount(count)
+        }
+
+
 
 
 
@@ -392,6 +398,14 @@ class VideoPlayAdapter(
     //更新列表中指定位置视频的关注状态
     fun updateFollowStatus(position: Int, isFollowed: Boolean) {
         videoHolders[position]?.updateFollowState(isFollowed)
+    }
+
+    //更新指定位置视频的评论数
+    fun updateCommentCount(position: Int, newCount: Int) {
+        if (position in videoList.indices) {
+            videoList[position].commentCount = newCount
+            videoHolders[position]?.updateCommentCount(newCount)
+        }
     }
 
     fun onPageSelected(position: Int) {

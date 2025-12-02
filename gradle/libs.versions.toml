@@ -15,6 +15,7 @@ glide = "4.12.0"
 viewpager2 = "1.1.0"
 media3Datasource = "1.8.0"
 lifecycleCommonJvm = "2.10.0"
+uiTestAndroid = "1.6.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,7 +39,8 @@ glide-core = { module = "com.github.bumptech.glide:glide", version.ref = "glide"
 glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 androidx-media3-datasource = { group = "androidx.media3", name = "media3-datasource", version.ref = "media3Datasource" }
-androidx-lifecycle-common-jvm = { group = "androidx.lifecycle", name = "lifecycle-common-jvm", version.ref = "lifecycleCommonJvm" }  # Glide注解处理器
+androidx-lifecycle-common-jvm = { group = "androidx.lifecycle", name = "lifecycle-common-jvm", version.ref = "lifecycleCommonJvm" }
+androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }  # Glide注解处理器
 
 
 [plugins]

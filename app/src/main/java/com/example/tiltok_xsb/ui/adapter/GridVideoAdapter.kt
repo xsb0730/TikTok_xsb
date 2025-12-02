@@ -11,6 +11,7 @@ import com.example.tiltok_xsb.databinding.ItemGridvideoBinding
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.base.BaseAdapter
 import com.example.tiltok_xsb.ui.adapter.GridVideoAdapter.GridVideoViewHolder
+import java.util.Locale
 
 
 class GridVideoAdapter(private val context: Context,
@@ -99,8 +100,8 @@ class GridVideoAdapter(private val context: Context,
     private fun formatLikeCount(count:Int):String{
         return when {
             count < 1000 -> count.toString()
-            count < 10000 -> String.format("%.1fk", count / 1000.0)
-            else -> String.format("%.1fw", count / 10000.0)
+            count < 10000 -> String.format(Locale.US, "%.1fk", count / 1000.0)
+            else -> String.format(Locale.US, "%.1fw", count / 10000.0)
         }
     }
 
@@ -113,7 +114,5 @@ class GridVideoAdapter(private val context: Context,
     }
 
 
-    inner class GridVideoViewHolder(val binding: ItemGridvideoBinding) : RecyclerView.ViewHolder(binding.root) {
-
-    }
+    inner class GridVideoViewHolder(val binding: ItemGridvideoBinding) : RecyclerView.ViewHolder(binding.root)
 }

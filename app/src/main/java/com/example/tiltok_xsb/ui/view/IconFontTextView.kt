@@ -8,24 +8,44 @@ import androidx.appcompat.widget.AppCompatTextView
 /**
  *图标字体文本视图
  */
-class IconFontTextView : AppCompatTextView {
-    constructor(context: Context) : super(context) {}
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {}
+class IconFontTextView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : AppCompatTextView(context, attrs, defStyleAttr) {
 
     companion object {
-        /** 所有IconFontTextView公用typeface  */
-        private var typeface: Typeface? = null
+        private const val TAG = "IconFontTextView"
+        private const val FONT_PATH = "iconfont.ttf"
+
+        /**
+         * 缓存的字体实例（所有 IconFontTextView 共享）
+         */
+        private var cachedTypeface: Typeface? = null
+
+        /**
+         * 获取图标字体
+         */
+        @Synchronized
+        fun getIconTypeface(context: Context): Typeface? {
+            if (cachedTypeface == null) {
+                try {
+                    cachedTypeface = Typeface.createFromAsset(context.assets, FONT_PATH)
+                    android.util.Log.d(TAG, "字体加载成功: $FONT_PATH")
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "字体加载失败: $FONT_PATH", e)
+                }
+            }
+            return cachedTypeface
+        }
     }
 
     init {
-        try {
-            // 尝试加载字体文件
-            val typeface = Typeface.createFromAsset(context.assets, "iconfont.ttf")
+        // 加载并设置图标字体
+        getIconTypeface(context)?.let { typeface ->
             setTypeface(typeface)
-        } catch (e: Exception) {
-            // 如果字体文件不存在，打印警告但不崩溃
-            e.printStackTrace()
-            // 使用默认字体
+        } ?: run {
+            android.util.Log.w(TAG, "使用默认字体，因为图标字体加载失败")
         }
     }
 }

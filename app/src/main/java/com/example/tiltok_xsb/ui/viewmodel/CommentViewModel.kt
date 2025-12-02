@@ -25,27 +25,27 @@ class CommentViewModel(
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
+
     private var currentVideoId: Int = 0
 
     // 加载评论
     fun loadComments(videoId: Int) {
         currentVideoId = videoId
-        android.util.Log.d("CommentViewModel", "开始加载评论，videoId: $videoId")
+
 
         viewModelScope.launch {
             _commentList.value = Resource.Loading()
 
             val result = repository.getCommentList(videoId)
-            android.util.Log.d("CommentViewModel", "加载结果: ${result.isSuccess}")
+
 
             if (result.isSuccess) {
                 val comments = result.getOrNull() ?: emptyList()
-                android.util.Log.d("CommentViewModel", "评论数量: ${comments.size}")
 
                 _commentList.value = Resource.Success(comments)
                 _commentCount.value = comments.size
             } else {
-                android.util.Log.e("CommentViewModel", "加载失败: ${result.exceptionOrNull()}")
+
 
                 _commentList.value = Resource.Error("加载评论失败")
                 _errorMessage.value = "加载评论失败"
@@ -69,9 +69,13 @@ class CommentViewModel(
                 val newComment = result.getOrNull()
                 if (newComment != null) {
                     val currentList = _commentList.value?.data?.toMutableList() ?: mutableListOf()
+
+                    // 将新评论插入到列表头部
                     currentList.add(0, newComment)
 
+                    // 更新评论列表
                     _commentList.value = Resource.Success(currentList)
+
                     _commentCount.value = currentList.size
                     _publishResult.value = Resource.Success(newComment)
                 }
@@ -107,4 +111,8 @@ class CommentViewModel(
         }
     }
 
+    //获取当前评论数
+    fun getCurrentCommentCount(): Int {
+        return _commentCount.value ?: 0
+    }
 }

@@ -4,7 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.lifecycle.Lifecycle
-import com.example.tiltok_xsb.databinding.FragmentMainBinding
+
 
 class CommPagerAdapter(
     fragmentManager: FragmentManager,
