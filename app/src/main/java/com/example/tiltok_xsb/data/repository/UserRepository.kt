@@ -1,0 +1,84 @@
+package com.example.tiltok_xsb.data.repository
+
+import android.content.Context
+import android.net.Uri
+import com.example.tiltok_xsb.data.model.UserInfo
+import com.example.tiltok_xsb.utils.ImageUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import java.io.File
+
+class UserRepository(private val context: Context) {
+
+    /**
+     * 获取用户信息
+     */
+    suspend fun getUserInfo(userId: String): Result<UserInfo> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // TODO: 替换为实际的网络请求
+                delay(500) // 模拟网络延迟
+
+                // 模拟数据
+                val userInfo = UserInfo(
+                    userId = "123456",
+                    nickname = "药獸",
+                    douyinId = "570610221xsb",
+                    avatarUrl = "",             // 实际应该是服务器返回的 URL
+                    backgroundUrl = "",
+                    signature = "为实现中华民族伟大复兴的中国梦而努力奋斗",
+                    age = 24,
+                    location = "重庆",
+                    likesCount = 520,
+                    followingCount = 13,
+                    fansCount = 14,
+                    isFollowing = false
+                )
+
+                Result.success(userInfo)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * 上传头像
+     */
+    suspend fun uploadAvatar(uri: Uri): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 压缩图片
+                val compressedFile = ImageUtils.compressImage(context, uri, maxSize = 512)
+                    ?: return@withContext Result.failure(Exception("图片压缩失败"))
+
+                // TODO: 使用 Retrofit 上传到服务器
+                delay(1000) // 模拟上传延迟
+
+                // 模拟返回的头像 URL
+                val avatarUrl = uri.toString() // 实际应该是服务器返回的 URL
+
+                Result.success(avatarUrl)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * 更新用户信息
+     */
+    suspend fun updateUserInfo(userInfo: UserInfo): Result<UserInfo> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // TODO: 发送到服务器
+                delay(500)
+
+                Result.success(userInfo)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+}

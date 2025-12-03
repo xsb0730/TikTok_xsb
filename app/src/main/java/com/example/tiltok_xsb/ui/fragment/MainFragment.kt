@@ -170,26 +170,36 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
     private fun onFriendClick(){
         Toast.makeText(context, "朋友页面待实现", Toast.LENGTH_SHORT).show()
-//        binding.tabMainMenu!!.getTabAt(0)?.select()
+        binding.tabMainMenu.getTabAt(0)?.select()
     }
 
     private fun onPlusClick() {
         Toast.makeText(context, "拍摄功能待实现", Toast.LENGTH_SHORT).show()
-//        binding.tabMainMenu!!.getTabAt(0)?.select()
+        binding.tabMainMenu.getTabAt(0)?.select()
     }
 
     private fun onMessageClick() {
         Toast.makeText(context, "消息页面待实现", Toast.LENGTH_SHORT).show()
-//        binding.tabMainMenu!!.getTabAt(0)?.select()
+        binding.tabMainMenu.getTabAt(0)?.select()
     }
 
     private fun onMineClick() {
-        Toast.makeText(context, "个人中心待实现", Toast.LENGTH_SHORT).show()
-//        binding.tabMainMenu!!.getTabAt(0)?.select()
+        val personalHomeFragment = PersonalHomeFragment()
+
+        parentFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right,
+                android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right
+            )
+            .replace(android.R.id.content, personalHomeFragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun setupSearchClick(){
-        binding.ivSearch?.setOnClickListener{
+        binding.ivSearch.setOnClickListener{
             Toast.makeText(context, "搜索功能待实现", Toast.LENGTH_SHORT).show()
         }
     }

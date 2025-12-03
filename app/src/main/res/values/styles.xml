@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+
+
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/color_bg_theme</item>
         <item name="colorPrimaryDark">@color/color_bg_theme</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!-- 启用 Activity 转场动画 -->
+        <item name="android:windowContentTransitions">true</item>
+        <!-- 设置转场动画时长 -->
+        <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
+        <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
+        <!-- 转场动画期间保留封面 -->
+        <item name="android:windowSharedElementsUseOverlay">true</item>
     </style>
+
+
 
     <style name="Launch_Theme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
@@ -27,6 +38,8 @@
         <item name="android:backgroundDimEnabled">true</item>
     </style>
 
+
+
     <!-- 定义上Tab的文字样式：18sp+加粗 -->
     <style name="TabTextStyle" parent="TextAppearance.Design.Tab">
         <!-- 文字大小 -->
@@ -40,6 +53,8 @@
         <item name="android:layout_gravity">center</item>
     </style>
 
+
+
     <!-- 未选中下Tab的文字样式：15sp+加粗 -->
     <style name="TabNormalText" parent="TextAppearance.Design.Tab">
         <item name="android:textSize">15sp</item>
@@ -49,6 +64,8 @@
         <item name="android:layout_gravity">center</item>
     </style>
 
+
+
     <!-- 选中下Tab的文字样式：16sp+加粗 -->
     <style name="TabSelectedText" parent="TextAppearance.Design.Tab">
         <item name="android:textSize">16sp</item>
@@ -57,6 +74,8 @@
         <item name="android:gravity">center</item>
         <item name="android:layout_gravity">center</item>
     </style>
+
+
 
     <!-- BottomSheetDialog 主题 -->
     <style name="BottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
@@ -68,10 +87,14 @@
         <item name="android:windowCloseOnTouchOutside">true</item>
     </style>
 
+
+
     <!-- BottomSheet 样式 -->
     <style name="BottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
         <!-- 背景设为透明 -->
         <item name="android:background">@android:color/transparent</item>
     </style>
+
+
 
 </resources>

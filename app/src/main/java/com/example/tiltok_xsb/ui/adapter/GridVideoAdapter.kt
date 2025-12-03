@@ -3,6 +3,7 @@ package com.example.tiltok_xsb.ui.adapter
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -15,7 +16,7 @@ import java.util.Locale
 
 
 class GridVideoAdapter(private val context: Context,
-                       private val onItemClick: (VideoBean, Int) -> Unit,
+                       private val onItemClick: (VideoBean, Int,ItemGridvideoBinding) -> Unit,
                        private val onAvatarClick: (VideoBean, Int) -> Unit,
                        private val onLikeClick: (VideoBean, Int) -> Unit) : BaseAdapter<GridVideoViewHolder, VideoBean>(VideoDiff()) {
 
@@ -39,11 +40,14 @@ class GridVideoAdapter(private val context: Context,
             ivAuthorName.text=video.userBean?.nickName?:"抖音用户xxx"
             ivLikeCount.text=formatLikeCount(video.likeCount)
 
+            // 设置共享元素的 transitionName（每个封面唯一标识）
+            ViewCompat.setTransitionName(ivCover, "video_cover_$position")
+
             //点击整个卡片跳转
             root.setOnClickListener {
                 val currentPosition = holder.bindingAdapterPosition
                 if (currentPosition != RecyclerView.NO_POSITION) {
-                    onItemClick(video, currentPosition)
+                    onItemClick(video, currentPosition,holder.binding)
                 }
             }
 

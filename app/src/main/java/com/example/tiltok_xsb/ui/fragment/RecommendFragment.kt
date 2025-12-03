@@ -3,12 +3,16 @@ package com.example.tiltok_xsb.ui.fragment
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.core.util.Pair
+import androidx.core.app.ActivityOptionsCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
+import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.databinding.FragmentRecommendBinding
+import com.example.tiltok_xsb.databinding.ItemGridvideoBinding
 import com.example.tiltok_xsb.ui.activity.VideoPlayActivity
 import com.example.tiltok_xsb.ui.adapter.GridVideoAdapter
 import com.example.tiltok_xsb.ui.viewmodel.RecommendViewModel
@@ -49,10 +53,9 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         //初始化适配器并绑定数据
         adapter= GridVideoAdapter(
             context=requireContext(),
-            onItemClick = { _, position->
-                // 点击卡片跳转到全屏播放
-                val videoList = viewModel.getCurrentVideoList()
-                VideoPlayActivity.start(requireContext(), videoList, position)
+            onItemClick = { video, position, itemBinding->
+                // 启动带共享元素的转场动画
+                startVideoPlayWithTransition(video, position, itemBinding)
             },
             onAvatarClick = { video, _ ->
                 // 点击头像跳转到作者页面
@@ -69,6 +72,36 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         binding.recyclerView.adapter=adapter
         binding.recyclerView.setHasFixedSize(true)
     }
+
+    // 启动带共享元素转场的视频播放页面
+    private fun startVideoPlayWithTransition(
+        video: VideoBean,
+        position: Int,
+        itemBinding: ItemGridvideoBinding
+    ) {
+        val videoList = viewModel.getCurrentVideoList()
+
+        // 创建共享元素配对
+        val coverPair = Pair.create(
+            itemBinding.ivCover as View,
+            "video_cover_$position"
+        )
+
+        // 创建转场动画选项
+        val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+            requireActivity(),
+            coverPair
+        )
+
+        // 启动 Activity
+        VideoPlayActivity.startWithTransition(
+            requireContext(),
+            videoList,
+            position,
+            options.toBundle()
+        )
+    }
+
 
     //设置滑动手势
     private fun setupSwipeGesture() {

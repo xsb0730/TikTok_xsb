@@ -74,7 +74,8 @@ dependencies {
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.media3.datasource)
     implementation(libs.androidx.lifecycle.common.jvm)
-    implementation(libs.androidx.ui.test.android)  // Glide核心库
+    implementation(libs.androidx.ui.test.android)
+    implementation(libs.androidx.media3.exoplayer)  // Glide核心库
     ksp("androidx.room:room-compiler:2.6.0")
     ksp("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.google.android.material:material:1.11.0")
@@ -85,6 +86,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.activity:activity-ktx:1.8.1")
+    implementation("com.github.yalantis:ucrop:2.2.8")
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
 
 

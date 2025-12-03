@@ -38,4 +38,34 @@
     <string name="icon_more">&#xe61b;</string>
     <!-- 地理位置 -->
     <string name="icon_location_fill">&#xe624;</string>
+
+    <!-- ========== 个人主页相关 ========== -->
+    <string name="user_background_image">用户背景图片</string>
+    <string name="user_avatar">用户头像</string>
+    <string name="back_button">返回</string>
+    <string name="follow">关注</string>
+    <string name="more_options">更多选项</string>
+    <string name="tab_navigation">标签导航</string>
+    <string name="content_pages">内容页面</string>
+    <string name="dropdown_menu">下拉菜单</string>
+    <string name="dropdown_arrow">下拉箭头</string>
+    <!-- 个人信息 -->
+    <string name="douyin_id">抖音号: %s</string>
+    <string name="age">%s岁</string>
+    <string name="location">%s</string>
+    <!-- 统计信息 -->
+    <string name="likes_received">\u0020获赞</string>
+    <string name="following">\u0020关注</string>
+    <string name="followers">\u0020粉丝</string>
+    <!-- 个性签名示例 -->
+    <string name="default_signature">为实现中华民族伟大复兴的中国梦而努力奋斗\n</string>
+    <!-- 示例数据 -->
+    <string name="example_nickname">药獸</string>
+    <string name="example_douyin_id">抖音号: 570610221xsb</string>
+    <string name="example_age">24岁</string>
+    <string name="example_location">重庆</string>
+    <string name="example_likes">520</string>
+    <string name="example_following">13</string>
+    <string name="example_followers">14</string>
+
 </resources>

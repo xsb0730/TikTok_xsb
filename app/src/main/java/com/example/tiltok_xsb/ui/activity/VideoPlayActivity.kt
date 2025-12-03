@@ -2,9 +2,12 @@ package com.example.tiltok_xsb.ui.activity
 
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tiltok_xsb.base.BaseBindingActivity
 import com.example.tiltok_xsb.databinding.ActivityVideoPlayBinding
@@ -24,13 +27,23 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         private const val KEY_VIDEO_LIST="video_list"
         private const val KEY_POSITION="position"
 
-        //启动视频播放页面
-        fun start(context:Context, videoList: ArrayList<VideoBean>, position:Int){
-            val intent= Intent(context,VideoPlayActivity::class.java).apply{
-                putParcelableArrayListExtra(KEY_VIDEO_LIST,videoList)
-                putExtra(KEY_POSITION,position)
+        // 带转场动画的启动方法
+        fun startWithTransition(
+            context: Context,
+            videoList: ArrayList<VideoBean>,
+            position: Int,
+            options: Bundle?
+        ) {
+            val intent = Intent(context, VideoPlayActivity::class.java).apply {
+                putParcelableArrayListExtra(KEY_VIDEO_LIST, videoList)
+                putExtra(KEY_POSITION, position)
             }
-            context.startActivity(intent)
+            context.startActivity(intent, options)
+        }
+
+        // 原有的启动方法(不带转场）
+        fun start(context: Context, videoList: ArrayList<VideoBean>, position: Int) {
+            startWithTransition(context, videoList, position, null)
         }
     }
 
@@ -46,6 +59,9 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         setupViewPager()
         setupClickListeners()
         observeViewModel()
+
+        // 延迟转场动画，等待 View 准备好
+        supportPostponeEnterTransition()
     }
 
     //设置页面
@@ -67,10 +83,18 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             //设置当前位置
             binding.viewPager.setCurrentItem(currentPosition, false)
 
-            // 延迟调用 onPageSelected，确保 ViewPager 已经滚动到位
+            // 等待第一帧渲染完成后启动转场动画
             binding.viewPager.post {
                 videoPlayAdapter?.onPageSelected(currentPosition)
 
+                // 设置共享元素的 transitionName（与列表页保持一致）
+                val firstItemView = getViewPagerItemAt(currentPosition)
+                firstItemView?.let { view ->
+                    ViewCompat.setTransitionName(view, "video_cover_$currentPosition")
+                }
+
+                // 启动转场动画
+                supportStartPostponedEnterTransition()
             }
 
             //监听页面切换
@@ -93,6 +117,14 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             finish()
         }
     }
+
+    // 获取 ViewPager2 中指定位置的 View
+    private fun getViewPagerItemAt(position: Int): View? {
+        val recyclerView = binding.viewPager.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
+        val viewHolder = recyclerView?.findViewHolderForAdapterPosition(position)
+        return viewHolder?.itemView?.findViewById(com.example.tiltok_xsb.R.id.iv_cover)
+    }
+
 
     //观察事件
     private fun observeViewModel() {
@@ -163,10 +195,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
         // 弹窗关闭时恢复视频播放
         commentDialog.setOnDismissListener {
-            Log.d("VideoPlayActivity", "评论弹窗关闭")
             videoPlayAdapter?.resumeCurrentVideo()
         }
-
         commentDialog.show()
     }
 

@@ -6,6 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import android.widget.Toast
+import androidx.annotation.OptIn
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tiltok_xsb.databinding.ItemVideoPlayBinding
 import com.bumptech.glide.Glide
@@ -13,6 +21,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
+
 
 
 class VideoPlayAdapter(
@@ -28,9 +37,10 @@ class VideoPlayAdapter(
     inner class VideoViewHolder(val binding: ItemVideoPlayBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        private var isVideoPlaying = false
+        private var exoPlayer: ExoPlayer? = null
         private var recordAnimator: ObjectAnimator? = null
         private lateinit var currentVideo: VideoBean
+        private var isPlayerReady = false
 
         //将视频数据绑定到ViewHolder的视图上
         fun bind(video: VideoBean, position: Int) {
@@ -64,7 +74,7 @@ class VideoPlayAdapter(
                     if (video.userBean?.isFollowed == true) View.GONE else View.VISIBLE
 
                 setupClickListeners(video, position)
-                setupVideoPlayer(video)
+                setupExoPlayer(video)
 
                 // 设置双击点赞动画监听
                 setupLikeAnimationView(video, position)
@@ -76,6 +86,9 @@ class VideoPlayAdapter(
 
         //加载封面
         private fun loadCover(video: VideoBean) {
+            // 封面初始可见
+            binding.ivCover.visibility = View.VISIBLE
+
             if(video.coverRes!=0) {
                 Glide.with(binding.ivCover)
                     .load(video.coverRes)
@@ -84,7 +97,7 @@ class VideoPlayAdapter(
             {
                 Glide.with(binding.ivCover)
                     .asBitmap()
-                    .load(video.videoRes)
+                    .load(android.net.Uri.parse(video.videoRes))
                     .apply (RequestOptions().frame(0))
                     .placeholder(R.drawable.loading)
                     .error(R.drawable.default_error)
@@ -192,29 +205,84 @@ class VideoPlayAdapter(
             }
         }
 
-        //视频播放器初始状态
-        private fun setupVideoPlayer(video: VideoBean) {
-            with(binding) {
-                videoView.setVideoPath(video.videoRes)
+        // 设置 ExoPlayer
+        @OptIn(UnstableApi::class)  //使用了不稳定API
+        private fun setupExoPlayer(video: VideoBean) {
+            try {
+                // 创建 ExoPlayer 实例
+                exoPlayer = ExoPlayer.Builder(binding.root.context)
+                    .build()
+                    .apply {
+                        repeatMode = Player.REPEAT_MODE_ONE  // 单曲循环
 
-                videoView.setOnPreparedListener { mp ->
-                    mp.isLooping = true
-                    progressBar.visibility = View.GONE
-                    ivCover.visibility = View.GONE
-                    hidePauseIcon()
-                    isVideoPlaying = true
-                }
+                        // 绑定到 PlayerView
+                        binding.playerView.player = this
 
-                videoView.setOnErrorListener { _, what, extra ->
-                    progressBar.visibility = View.GONE
-                    android.util.Log.e("VideoPlayAdapter", "视频加载失败: what=$what, extra=$extra, path=${video.videoRes}")
-                    Toast.makeText(
-                        videoView.context,
-                        "视频加载失败 (错误码: $what-$extra)",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    true
-                }
+                        // 设置播放监听
+                        addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(playbackState: Int) {
+                                when (playbackState) {
+                                    Player.STATE_BUFFERING -> {
+                                        // 缓冲中
+                                        binding.progressBar.visibility = View.VISIBLE
+                                        android.util.Log.d("VideoPlayAdapter", "缓冲中...")
+                                    }
+                                    Player.STATE_READY -> {
+                                        // 视频准备好，隐藏封面
+                                        binding.progressBar.visibility = View.GONE
+                                        android.util.Log.d("VideoPlayAdapter", "视频准备完成")
+
+                                        if (!isPlayerReady) {
+                                            isPlayerReady = true
+                                            hideCoverWithAnimation()
+                                        }
+                                    }
+                                    Player.STATE_ENDED -> {
+                                        android.util.Log.d("VideoPlayAdapter", "播放结束")
+                                    }
+                                    Player.STATE_IDLE -> {
+                                        android.util.Log.d("VideoPlayAdapter", "播放器空闲")
+                                    }
+                                }
+                            }
+
+                            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                                android.util.Log.d("VideoPlayAdapter", "播放状态变化: $isPlaying")
+                                if (isPlaying) {
+                                    startRecordAnimation()
+                                    hidePauseIcon()
+                                } else {
+                                    pauseRecordAnimation()
+                                    showPauseIcon()
+                                }
+                            }
+
+                            override fun onPlayerError(error: PlaybackException) {
+                                android.util.Log.e("VideoPlayAdapter", "播放错误: ${error.message}")
+                                binding.progressBar.visibility = View.GONE
+                                Toast.makeText(
+                                    binding.root.context,
+                                    "视频加载失败: ${error.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        })
+
+                        // 设置视频源
+                        val uri = android.net.Uri.parse(video.videoRes)
+                        val mediaItem = MediaItem.fromUri(uri)
+
+                        val dataSourceFactory = DefaultDataSource.Factory(binding.root.context)
+                        val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(mediaItem)
+
+                        setMediaSource(mediaSource)
+                        prepare()
+                        playWhenReady = false  // 默认不自动播放
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPlayAdapter", "ExoPlayer 初始化失败: ${e.message}")
+                Toast.makeText(binding.root.context, "播放器初始化失败", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -225,19 +293,14 @@ class VideoPlayAdapter(
 
 
 
+
         //切换播放/暂停
         private fun togglePlayPause() {
-            with(binding.videoView) {
-                if (isPlaying) {
-                    pause()
-                    pauseRecordAnimation()
-                    showPauseIcon()
-                    isVideoPlaying = false
+            exoPlayer?.let {
+                if (it.isPlaying) {
+                    it.pause()
                 } else {
-                    start()
-                    startRecordAnimation()
-                    hidePauseIcon()
-                    isVideoPlaying = true
+                    it.play()
                 }
             }
         }
@@ -265,29 +328,52 @@ class VideoPlayAdapter(
                 .start()
         }
 
+        // 隐藏封面（带动画）
+        private fun hideCoverWithAnimation() {
+            binding.ivCover.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction {
+                    binding.ivCover.visibility = View.GONE
+                    binding.ivCover.alpha = 1f
+                }
+                .start()
+        }
+
+
         //播放
         fun play() {
-            binding.progressBar.visibility = View.VISIBLE
-            binding.videoView.start()
-            startRecordAnimation()
-            hidePauseIcon()
-            isVideoPlaying = true
+            exoPlayer?.let {
+                // 显示封面（如果是首次播放）
+                if (!isPlayerReady) {
+                    binding.ivCover.visibility = View.VISIBLE
+                    binding.ivCover.alpha = 1f
+                }
+
+                binding.progressBar.visibility = View.VISIBLE
+                it.play()
+                android.util.Log.d("VideoPlayAdapter", "开始播放")
+            }
         }
 
         //暂停
         fun pause() {
-            binding.videoView.pause()
-            pauseRecordAnimation()
-            showPauseIcon()
-            isVideoPlaying = false
+            exoPlayer?.let {
+                it.pause()
+                android.util.Log.d("VideoPlayAdapter", "暂停播放")
+            }
         }
 
         //视频资源释放，播放状态重置
         fun release() {
-            binding.videoView.stopPlayback()
+            exoPlayer?.release()
+            exoPlayer = null
             stopRecordAnimation()
             binding.ivPause.visibility = View.GONE
-            isVideoPlaying = false
+            binding.ivCover.visibility = View.VISIBLE
+            binding.ivCover.alpha = 1f
+            isPlayerReady = false
+            android.util.Log.d("VideoPlayAdapter", "释放播放器")
         }
 
         //启动唱片旋转动画的方法
@@ -362,9 +448,6 @@ class VideoPlayAdapter(
             }
         }
     }
-
-
-
 
 
 
