@@ -27,6 +27,18 @@
         android:layout_height="match_parent"
         android:orientation="vertical"/>
 
+    <!-- 全局封面（放在 ViewPager2 上层） -->
+    <ImageView
+        android:id="@+id/iv_global_cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- 上拉加载提示 -->
     <TextView
         android:id="@+id/tv_load_more_hint"

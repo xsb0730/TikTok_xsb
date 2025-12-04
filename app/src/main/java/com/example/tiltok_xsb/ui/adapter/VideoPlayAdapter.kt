@@ -27,7 +27,8 @@ import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
     private val viewModel: VideoPlayViewModel,
-    private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
+    private val onCommentClick: ((VideoBean, Int) -> Unit)? = null,
+    private val onCoverUpdate: ((Int, String?) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
     private var currentPlayingPosition = -1
@@ -41,18 +42,24 @@ class VideoPlayAdapter(
         private var recordAnimator: ObjectAnimator? = null
         private lateinit var currentVideo: VideoBean
         private var isPlayerReady = false
+        private var currentPosition: Int = -1
+
+        // 标记是否应该播放（只有调用 play() 后才为 true）
+        private var shouldPlay = false
 
         //将视频数据绑定到ViewHolder的视图上
         fun bind(video: VideoBean, position: Int) {
-            android.util.Log.d("VideoPlayAdapter", "========== bind() 开始 ==========")
-            android.util.Log.d("VideoPlayAdapter", "position=$position, videoId=${video.videoId}")
+            android.util.Log.d(
+                "VideoPlayAdapter",
+                "[pos=$position] ========== bind() 开始 =========="
+            )
 
             currentVideo = video
+            currentPosition = position      // 保存传入的位置
+            shouldPlay = false              // 重置标志
+            isPlayerReady = false           // 重置准备状态
 
             with(binding) {
-                //加载封面
-                android.util.Log.d("VideoPlayAdapter", "加载封面...")
-                loadCover(video)
 
                 //加载头像
                 android.util.Log.d("VideoPlayAdapter", "加载头像...")
@@ -92,26 +99,6 @@ class VideoPlayAdapter(
             android.util.Log.d("VideoPlayAdapter", "========== bind() 完成 ==========")
         }
 
-        //加载封面
-        private fun loadCover(video: VideoBean) {
-            // 封面初始可见
-            binding.ivCover.visibility = View.VISIBLE
-
-            if(video.coverRes!=0) {
-                Glide.with(binding.ivCover)
-                    .load(video.coverRes)
-                    .into(binding.ivCover)
-            }else
-            {
-                Glide.with(binding.ivCover)
-                    .asBitmap()
-                    .load(android.net.Uri.parse(video.videoRes))
-                    .apply (RequestOptions().frame(0))
-                    .placeholder(R.drawable.loading)
-                    .error(R.drawable.default_error)
-                    .into(binding.ivCover)
-            }
-        }
 
         //加载头像
         private fun loadAvatar(video: VideoBean) {
@@ -217,8 +204,12 @@ class VideoPlayAdapter(
         @OptIn(UnstableApi::class)  //使用了不稳定API
         private fun setupExoPlayer(video: VideoBean) {
             android.util.Log.d("VideoPlayAdapter", "========== setupExoPlayer 开始 ==========")
+            android.util.Log.d(
+                "VideoPlayAdapter",
+                "position=$currentPosition, videoId=${video.videoId}, videoRes: ${video.videoRes}"
+            )
 
-            // ✅ 检查 videoRes 是否为空
+            // 检查 videoRes 是否为空
             if (video.videoRes.isNullOrEmpty()) {
                 android.util.Log.e("VideoPlayAdapter", "❌ videoRes 为空或 null！")
                 Toast.makeText(binding.root.context, "视频路径为空", Toast.LENGTH_SHORT).show()
@@ -245,32 +236,68 @@ class VideoPlayAdapter(
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 when (playbackState) {
                                     Player.STATE_BUFFERING -> {
-                                        // 缓冲中
                                         binding.progressBar.visibility = View.VISIBLE
-                                        android.util.Log.d("VideoPlayAdapter", "缓冲中...")
+                                        android.util.Log.d(
+                                            "VideoPlayAdapter",
+                                            "[pos=$currentPosition] 缓冲中..."
+                                        )
                                     }
+
                                     Player.STATE_READY -> {
-                                        // 视频准备好，隐藏封面
                                         binding.progressBar.visibility = View.GONE
-                                        android.util.Log.d("VideoPlayAdapter", "视频准备完成")
+                                        android.util.Log.d(
+                                            "VideoPlayAdapter",
+                                            "[pos=$currentPosition] 视频准备完成"
+                                        )
 
                                         if (!isPlayerReady) {
                                             isPlayerReady = true
-                                            hideCoverWithAnimation()
+
+                                            // ✅ 如果需要播放，立即开始
+                                            if (shouldPlay && !isPlaying) {
+                                                android.util.Log.d(
+                                                    "VideoPlayAdapter",
+                                                    "[pos=$currentPosition] 自动开始播放"
+                                                )
+                                                play()
+                                            }
                                         }
                                     }
+
                                     Player.STATE_ENDED -> {
-                                        android.util.Log.d("VideoPlayAdapter", "播放结束")
+                                        android.util.Log.d(
+                                            "VideoPlayAdapter",
+                                            "[pos=$currentPosition] 播放结束"
+                                        )
                                     }
+
                                     Player.STATE_IDLE -> {
-                                        android.util.Log.d("VideoPlayAdapter", "播放器空闲")
+                                        android.util.Log.d(
+                                            "VideoPlayAdapter",
+                                            "[pos=$currentPosition] 播放器空闲"
+                                        )
                                     }
                                 }
                             }
 
+                            // 渲染第一帧时通知 Activity 隐藏封面
+                            override fun onRenderedFirstFrame() {
+                                android.util.Log.d(
+                                    "VideoPlayAdapter",
+                                    "[pos=$currentPosition] ✅ 渲染第一帧"
+                                )
+
+                                if (shouldPlay) {
+                                    // 通知 Activity 隐藏封面（如果是首次进入）
+                                    onCoverUpdate?.invoke(currentPosition.toInt(), null)
+                                }
+                            }
 
                             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                                android.util.Log.d("VideoPlayAdapter", "播放状态变化: $isPlaying")
+                                android.util.Log.d(
+                                    "VideoPlayAdapter",
+                                    "[pos=$currentPosition] 播放状态: $isPlaying"
+                                )
                                 if (isPlaying) {
                                     startRecordAnimation()
                                     hidePauseIcon()
@@ -281,15 +308,19 @@ class VideoPlayAdapter(
                             }
 
                             override fun onPlayerError(error: PlaybackException) {
-                                android.util.Log.e("VideoPlayAdapter", "播放错误: ${error.message}")
+                                android.util.Log.e(
+                                    "VideoPlayAdapter",
+                                    "[pos=$currentPosition] 播放错误: ${error.message}"
+                                )
                                 binding.progressBar.visibility = View.GONE
                                 Toast.makeText(
                                     binding.root.context,
-                                    "视频加载失败: ${error.message}",
+                                    "视频加载失败",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
                         })
+
                         android.util.Log.d("VideoPlayAdapter", "videoRes 值: ${video.videoRes}")
                         android.util.Log.d("VideoPlayAdapter", "videoRes 类型: ${video.videoRes::class.java.simpleName}")
 
@@ -361,61 +392,57 @@ class VideoPlayAdapter(
                 .start()
         }
 
-        // 隐藏封面（带动画）
-        private fun hideCoverWithAnimation() {
-            binding.ivCover.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .withEndAction {
-                    binding.ivCover.visibility = View.GONE
-                    binding.ivCover.alpha = 1f
-                }
-                .start()
-        }
-
-
         //播放
         fun play() {
-            android.util.Log.d("VideoPlayAdapter", "========== play() 被调用 ==========")
+            android.util.Log.d(
+                "VideoPlayAdapter",
+                "[pos=$currentPosition] ========== play() 被调用 =========="
+            )
+
+            shouldPlay = true
+
             if (exoPlayer == null) {
-                android.util.Log.e("VideoPlayAdapter", "❌ exoPlayer 为 null！")
+                android.util.Log.e("VideoPlayAdapter", "[pos=$currentPosition] ❌ exoPlayer 为 null")
                 return
             }
-            exoPlayer?.let {
-                // 如果播放器处于 IDLE 或 ENDED 状态，重新准备
-                if (it.playbackState == Player.STATE_IDLE || it.playbackState == Player.STATE_ENDED) {
-                    android.util.Log.d("VideoPlayAdapter", "播放器状态异常，重新准备")
-                    it.prepare()
+
+            exoPlayer?.let { player ->
+                when (player.playbackState) {
+                    Player.STATE_IDLE -> {
+                        android.util.Log.d("VideoPlayAdapter", "[pos=$currentPosition] 重新准备")
+                        player.prepare()
+                    }
+
+                    Player.STATE_ENDED -> {
+                        android.util.Log.d("VideoPlayAdapter", "[pos=$currentPosition] 重新播放")
+                        player.seekTo(0)
+                    }
                 }
 
-                // 如果视频还没准备好，显示封面和加载动画
-                if (!isPlayerReady) {
-                    android.util.Log.d("VideoPlayAdapter", "首次播放，显示封面和加载动画")
-                    binding.ivCover.visibility = View.VISIBLE
-                    binding.ivCover.alpha = 1f
-                    binding.progressBar.visibility = View.VISIBLE
-                } else {
-                    // 如果视频已经准备好，不显示加载动画
-                    android.util.Log.d("VideoPlayAdapter", "视频已准备好，直接播放")
-                }
-
-                it.play()
-                android.util.Log.d("VideoPlayAdapter", "play() 调用完成")
+                player.play()
+                android.util.Log.d(
+                    "VideoPlayAdapter",
+                    "[pos=$currentPosition] play() 完成"
+                )
             }
         }
 
         //暂停
         fun pause() {
-            exoPlayer?.let {
-                it.pause()
-                android.util.Log.d("VideoPlayAdapter", "暂停播放")
-            }
+            android.util.Log.d("VideoPlayAdapter", "[$currentPosition] 暂停播放")
+
+            // 清除播放标志
+            shouldPlay = false
+            exoPlayer?.pause()
         }
 
         //视频资源释放，播放状态重置
         fun release() {
-            android.util.Log.d("VideoPlayAdapter", "释放 ViewHolder 资源")
-            // 先停止播放
+            android.util.Log.d("VideoPlayAdapter", "[pos=$currentPosition] 释放资源")
+
+            shouldPlay = false
+            isPlayerReady = false
+
             exoPlayer?.stop()
             exoPlayer?.clearMediaItems()
             exoPlayer?.release()
@@ -423,11 +450,9 @@ class VideoPlayAdapter(
 
             stopRecordAnimation()
             binding.ivPause.visibility = View.GONE
-            binding.ivCover.visibility = View.VISIBLE
-            binding.ivCover.alpha = 1f
             binding.progressBar.visibility = View.GONE
-            isPlayerReady = false
-            android.util.Log.d("VideoPlayAdapter", "释放播放器")
+
+            android.util.Log.d("VideoPlayAdapter", "[pos=$currentPosition] 释放完成")
         }
 
         //启动唱片旋转动画的方法
@@ -547,28 +572,33 @@ class VideoPlayAdapter(
 
     fun onPageSelected(position: Int) {
         android.util.Log.d("VideoPlayAdapter", "========== onPageSelected ==========")
-        android.util.Log.d("VideoPlayAdapter", "position: $position")
-        android.util.Log.d("VideoPlayAdapter", "currentPlayingPosition: $currentPlayingPosition")
-        android.util.Log.d("VideoPlayAdapter", "videoHolders.size: ${videoHolders.size}")
-        android.util.Log.d("VideoPlayAdapter", "videoHolders.keys: ${videoHolders.keys}")
+        android.util.Log.d("VideoPlayAdapter", "切换到 position: $position")
 
+        // ✅ 通知 Activity 显示新封面
+        val video = videoList.getOrNull(position)
+        val coverRes = video?.coverRes?.let { if (it != 0) it.toString() else video.videoRes }
+        onCoverUpdate?.invoke(position, coverRes)
+
+        // 暂停之前的视频
         if (currentPlayingPosition != -1 && currentPlayingPosition != position) {
             android.util.Log.d("VideoPlayAdapter", "暂停 position=$currentPlayingPosition")
             videoHolders[currentPlayingPosition]?.pause()
         }
+
+        currentPlayingPosition = position
+
+        // 播放当前视频
         val holder = videoHolders[position]
         if (holder == null) {
-            android.util.Log.e("VideoPlayAdapter", "❌ 找不到 position=$position 的 ViewHolder，延迟重试")
-            // 延迟重试
+            android.util.Log.e("VideoPlayAdapter", "❌ ViewHolder 未创建，延迟播放")
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 videoHolders[position]?.play()
-                android.util.Log.d("VideoPlayAdapter", "延迟播放 position=$position")
             }, 200)
         } else {
-            android.util.Log.d("VideoPlayAdapter", "✅ 找到 ViewHolder，开始播放")
+            android.util.Log.d("VideoPlayAdapter", "✅ 立即播放")
             holder.play()
         }
-        currentPlayingPosition = position
+
         android.util.Log.d("VideoPlayAdapter", "========== onPageSelected 完成 ==========")
     }
 

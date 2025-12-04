@@ -18,14 +18,6 @@
         app:use_controller="false"
         app:surface_type="surface_view"/>
 
-    <!-- 封面图（加载中显示） -->
-    <ImageView
-        android:id="@+id/iv_cover"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:transitionName="shared_cover"/>
-
     <!-- 双击点赞动画层 -->
     <com.example.tiltok_xsb.ui.view.LikeAnimationView
         android:id="@+id/like_animation_view"
