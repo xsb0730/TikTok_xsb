@@ -3,7 +3,7 @@ package com.example.tiltok_xsb.ui.activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -16,12 +16,18 @@ import com.example.tiltok_xsb.ui.adapter.VideoPlayAdapter
 import com.example.tiltok_xsb.ui.view.CommentDialog
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 import com.example.tiltok_xsb.utils.FullScreenUtil
+import com.example.tiltok_xsb.utils.Resource
+import com.example.tiltok_xsb.utils.VideoPlayTouchHelper
 
 class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityVideoPlayBinding.inflate(it)}) {
     private val viewModel: VideoPlayViewModel by viewModels()
     private var videoPlayAdapter:VideoPlayAdapter?=null
     private var currentPosition:Int=0
-    private var videoList:ArrayList<VideoBean>?=null
+    private val videoList = mutableListOf<VideoBean>()
+
+    private var touchHelper: VideoPlayTouchHelper? = null
+    private var isRefreshing = false
+    private var isLoadingMore = false
 
     companion object{
         private const val KEY_VIDEO_LIST="video_list"
@@ -53,11 +59,25 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         FullScreenUtil.setFullScreen(this)
 
         //获取传递的数据
-        videoList=intent.getParcelableArrayListExtraCompat<VideoBean>(KEY_VIDEO_LIST)
+        val receivedList = intent.getParcelableArrayListExtraCompat<VideoBean>(KEY_VIDEO_LIST)
         currentPosition=intent.getIntExtra(KEY_POSITION,0)
+
+        receivedList?.let {
+            videoList.clear()
+            videoList.addAll(it)
+            android.util.Log.d("VideoPlayActivity", "✅ 接收到 ${videoList.size} 条视频数据")
+        }
+
+        if (videoList.isEmpty()) {
+            android.util.Log.e("VideoPlayActivity", "❌ 视频列表为空！")
+            Toast.makeText(this, "没有视频数据", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         setupViewPager()
         setupClickListeners()
+        setupTouchHelper()
         observeViewModel()
 
         // 延迟转场动画，等待 View 准备好
@@ -66,6 +86,16 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
     //设置页面
     private fun setupViewPager(){
+        android.util.Log.d("VideoPlayActivity", "========== 设置 ViewPager2 ==========")
+        android.util.Log.d("VideoPlayActivity", "视频列表大小: ${videoList.size}")
+        android.util.Log.d("VideoPlayActivity", "当前位置: $currentPosition")
+
+        if (videoList.isEmpty()) {
+            android.util.Log.e("VideoPlayActivity", "❌ 视频列表为空！")
+            Toast.makeText(this, "没有视频数据", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         videoList?.let{list->
             videoPlayAdapter= VideoPlayAdapter(
                 list,
@@ -79,23 +109,34 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             binding.viewPager.adapter=videoPlayAdapter
             binding.viewPager.orientation=ViewPager2.ORIENTATION_VERTICAL
             binding.viewPager.offscreenPageLimit=1
-
             //设置当前位置
             binding.viewPager.setCurrentItem(currentPosition, false)
 
-            // 等待第一帧渲染完成后启动转场动画
-            binding.viewPager.post {
-                videoPlayAdapter?.onPageSelected(currentPosition)
+            // 监听 RecyclerView 布局完成
+            val recyclerView = binding.viewPager.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
+            recyclerView?.viewTreeObserver?.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    // 移除监听器，防止多次调用
+                    recyclerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
-                // 设置共享元素的 transitionName（与列表页保持一致）
-                val firstItemView = getViewPagerItemAt(currentPosition)
-                firstItemView?.let { view ->
-                    ViewCompat.setTransitionName(view, "video_cover_$currentPosition")
+                    android.util.Log.d("VideoPlayActivity", "RecyclerView 布局完成")
+
+                    // 再延迟一帧，确保 ViewHolder 绑定完成
+                    recyclerView.post {
+                        android.util.Log.d("VideoPlayActivity", "开始播放视频")
+                        videoPlayAdapter?.onPageSelected(currentPosition)
+
+                        // 设置共享元素的 transitionName（与列表页保持一致）
+                        val firstItemView = getViewPagerItemAt(currentPosition)
+                        firstItemView?.let { view ->
+                            ViewCompat.setTransitionName(view, "video_cover_$currentPosition")
+                        }
+
+                        // 启动转场动画
+                        supportStartPostponedEnterTransition()
+                    }
                 }
-
-                // 启动转场动画
-                supportStartPostponedEnterTransition()
-            }
+            })
 
             //监听页面切换
             binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -118,6 +159,57 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         }
     }
 
+    // 设置触摸监听
+    private fun setupTouchHelper() {
+        touchHelper = VideoPlayTouchHelper(
+            context = this,
+            viewPager = binding.viewPager,
+            onPullDown = { distance ->
+                // 下拉时更新提示文字
+                val alpha = (distance / 300f).coerceIn(0f, 1f)
+                binding.tvRefreshHint.alpha = alpha
+                binding.tvRefreshHint.text = if (distance > 200f) "释放刷新" else "下拉刷新"
+            },
+            onPullUp = { distance ->
+                // 上拉时更新提示文字
+                val alpha = (distance / 300f).coerceIn(0f, 1f)
+                binding.tvLoadMoreHint.alpha = alpha
+                binding.tvLoadMoreHint.text = if (distance > 200f) "释放加载" else "上拉加载更多"
+            },
+            onRefresh = {
+                // 触发刷新
+                if (!isRefreshing) {
+                    isRefreshing = true
+                    binding.tvRefreshHint.text = "正在刷新..."
+                    viewModel.refreshVideos()
+                }
+            },
+            onLoadMore = {
+                // 触发加载更多
+                if (!isLoadingMore) {
+                    isLoadingMore = true
+                    binding.tvLoadMoreHint.text = "正在加载..."
+                    viewModel.loadMoreVideos()
+                }
+            }
+        )
+    }
+
+    // 拦截触摸事件
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // 先让 touchHelper 尝试处理
+        val handled = touchHelper?.onTouchEvent(ev) ?: false
+
+        // 如果 touchHelper 拦截了事件，返回 true
+        if (handled) {
+            return true
+        }
+
+        // 否则交给父类处理（让 ViewPager2 正常工作）
+        return super.dispatchTouchEvent(ev)
+    }
+
+
     // 获取 ViewPager2 中指定位置的 View
     private fun getViewPagerItemAt(position: Int): View? {
         val recyclerView = binding.viewPager.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
@@ -128,6 +220,82 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
     //观察事件
     private fun observeViewModel() {
+        // 观察刷新结果
+        viewModel.refreshResult.observe(this) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    android.util.Log.d("VideoPlayActivity", "正在刷新...")
+                }
+                is Resource.Success -> {
+                    isRefreshing = false
+                    binding.tvRefreshHint.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .start()
+
+                    resource.data?.let { newVideos ->
+                        android.util.Log.d("VideoPlayActivity", "刷新成功，获取到 ${newVideos.size} 条视频")
+
+                        val currentPos = currentPosition
+
+                        videoList.clear()
+                        videoList.addAll(0, newVideos)  // 插入到顶部
+
+                        videoPlayAdapter?.releaseAllVideos()
+                        videoPlayAdapter?.notifyDataSetChanged()
+
+                        val safePosition = if (currentPos < videoList.size) currentPos else 0
+                        currentPosition = safePosition
+
+                        binding.viewPager.postDelayed({
+                            if (binding.viewPager.currentItem != safePosition) {
+                                binding.viewPager.setCurrentItem(safePosition, false)
+                            }
+
+                            videoPlayAdapter?.onPageSelected(safePosition)
+
+                            android.util.Log.d("VideoPlayActivity", "刷新后恢复播放，position=$safePosition")
+                        }, 300)
+                        Toast.makeText(this, "刷新成功，加载了 ${newVideos.size} 条视频", Toast.LENGTH_SHORT).show()
+
+                    }
+                }
+                is Resource.Error -> {
+                    isRefreshing = false
+                    binding.tvRefreshHint.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .start()
+                    Toast.makeText(this, resource.message ?: "刷新失败", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // 观察加载更多结果
+        viewModel.loadMoreResult.observe(this) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    // 加载中
+                }
+                is Resource.Success -> {
+                    isLoadingMore = false
+                    binding.tvLoadMoreHint.alpha = 0f
+
+                    resource.data?.let { newVideos ->
+                        val startPosition = videoList.size
+                        videoList.addAll(newVideos)  // 追加到末尾
+                        videoPlayAdapter?.notifyItemRangeInserted(startPosition, newVideos.size)
+                        Toast.makeText(this, "加载了 ${newVideos.size} 条视频", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                is Resource.Error -> {
+                    isLoadingMore = false
+                    binding.tvLoadMoreHint.alpha = 0f
+                    Toast.makeText(this, resource.message ?: "加载失败", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         // 观察点赞结果
         viewModel.likeResult.observe(this) { (position, isLiked) ->
             videoPlayAdapter?.updateLikeStatus(position, isLiked)
