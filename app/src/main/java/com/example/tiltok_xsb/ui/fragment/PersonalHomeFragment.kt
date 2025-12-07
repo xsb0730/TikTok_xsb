@@ -17,6 +17,7 @@ import com.bumptech.glide.Glide
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.databinding.FragmentPersonalHomeBinding
+import com.example.tiltok_xsb.ui.adapter.PersonalHomePagerAdapter
 import com.example.tiltok_xsb.ui.view.AvatarChooseDialog
 import com.example.tiltok_xsb.ui.viewmodel.PersonalHomeViewModel
 import com.example.tiltok_xsb.utils.ImageUtils
@@ -33,44 +34,76 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 相机权限请求
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) openCamera()
-        else showToast("需要相机权限才能拍照")
+    ){ granted ->
+        android.util.Log.d("PersonalHome", "相机权限结果: $granted")
+        if (granted) {
+            openCamera()
+        } else {
+            showToast("需要相机权限才能拍照")
+        }
     }
 
     // 存储权限请求
     private val storagePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) openGallery()
-        else showToast("需要存储权限才能选择图片")
+        android.util.Log.d("PersonalHome", "存储权限结果: $granted")
+        if (granted) {
+            openGallery()
+        } else {
+            showToast("需要存储权限才能选择图片")
+        }
     }
 
     // 拍照结果
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
+        android.util.Log.d("PersonalHome", "拍照结果: success=$success, uri=$tempPhotoUri")
         if (success && tempPhotoUri != null) {
             startCrop(tempPhotoUri!!)
+        } else {
+            showToast("拍照失败")
         }
     }
+
 
     // 图库选择结果
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let { startCrop(it) }
+    )  { uri ->
+        android.util.Log.d("PersonalHome", "选择图片结果: $uri")
+        if (uri != null) {
+            startCrop(uri)
+        } else {
+            showToast("未选择图片")
+        }
     }
 
     // 裁剪结果
     private val cropImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val croppedUri = UCrop.getOutput(result.data!!)
-            croppedUri?.let {
-                // ✅ 通过 ViewModel 上传头像
-                viewModel.uploadAvatar(it)
+        android.util.Log.d("PersonalHome", "裁剪结果: resultCode=${result.resultCode}")
+
+        when (result.resultCode) {
+            Activity.RESULT_OK -> {
+                val croppedUri = result.data?.let { UCrop.getOutput(it) }
+                if (croppedUri != null) {
+                    android.util.Log.d("PersonalHome", "✅ 裁剪成功: $croppedUri")
+                    viewModel.uploadAvatar(croppedUri)
+                } else {
+                    android.util.Log.e("PersonalHome", "❌ 裁剪失败：URI 为空")
+                    showToast("裁剪失败")
+                }
+            }
+            UCrop.RESULT_ERROR -> {
+                val error = result.data?.let { UCrop.getError(it) }
+                android.util.Log.e("PersonalHome", "❌ 裁剪错误: ${error?.message}")
+                showToast("裁剪失败: ${error?.message}")
+            }
+            else -> {
+                android.util.Log.d("PersonalHome", "用户取消裁剪")
             }
         }
     }
@@ -78,26 +111,33 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        android.util.Log.d("PersonalHome", "========== Fragment 创建 ==========")
+        android.util.Log.d("PersonalHome", "Android 版本: ${Build.VERSION.SDK_INT}")
+
         setupToolbar()
         setupAvatarClick()
+        setupViewPager()
         observeViewModel()
 
-        // ✅ 加载用户数据
+        // 加载用户数据
         viewModel.loadUserInfo()
     }
 
-    // ✅ 观察 ViewModel 数据变化
+    // 设置 ViewPager 和 TabLayout
+    private fun setupViewPager() {
+        val adapter = PersonalHomePagerAdapter(childFragmentManager)
+        binding.viewPager.adapter = adapter
+        binding.tabLayout.setupWithViewPager(binding.viewPager)
+    }
+
+    // 观察 ViewModel 数据变化
     private fun observeViewModel() {
         // 观察用户信息
         viewModel.userInfo.observe(viewLifecycleOwner) { resource ->
             when (resource) {
-                is Resource.Loading -> {
-                    // 显示加载状态
-                }
+                is Resource.Loading -> {}
                 is Resource.Success -> {
-                    resource.data?.let { userInfo ->
-                        updateUI(userInfo)
-                    }
+                    resource.data?.let { updateUI(it) }
                 }
                 is Resource.Error -> {
                     showToast(resource.message ?: "加载失败")
@@ -109,12 +149,9 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         viewModel.avatarUploadStatus.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // 显示上传进度
                     showToast("正在上传头像...")
                 }
-                is Resource.Success -> {
-                    // 上传成功，头像已在 userInfo 中更新
-                }
+                is Resource.Success -> {}
                 is Resource.Error -> {
                     showToast(resource.message ?: "上传失败")
                 }
@@ -127,23 +164,13 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         }
     }
 
-    // ✅ 更新 UI
+    // 更新 UI
     private fun updateUI(userInfo: com.example.tiltok_xsb.data.model.UserInfo) {
         with(binding.homeHeader) {
             // 昵称
             tvNickname.text = userInfo.nickname
-
-            // 抖音号
-            val douyinIdText = "抖音号: ${userInfo.douyinId}"
-            // TODO: 设置抖音号到对应的 TextView
-
             // 个性签名
             tvSign.text = userInfo.signature
-
-            // 年龄和地区（这里需要使用 tools:text，实际数据通过代码设置）
-            // tvAge.text = "${userInfo.age}岁"
-            // tvLocation.text = userInfo.location
-
             // 统计数据
             tvGetLikeCount.text = viewModel.formatCount(userInfo.likesCount)
             tvFocusCount.text = viewModel.formatCount(userInfo.followingCount)
@@ -154,6 +181,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
                 .load(userInfo.avatarUrl.ifEmpty { R.mipmap.default_avatar })
                 .circleCrop()
                 .placeholder(R.mipmap.default_avatar)
+                .error(R.mipmap.default_avatar)
                 .into(ivHead)
         }
 
@@ -174,12 +202,15 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         }
     }
 
+    // 设置头像点击事件
     private fun setupAvatarClick() {
         binding.homeHeader.ivHead.setOnClickListener {
+            android.util.Log.d("PersonalHome", "点击头像，显示选择对话框")
             showAvatarChooseDialog()
         }
     }
 
+    // 显示头像选择对话框
     private fun showAvatarChooseDialog() {
         val dialog = AvatarChooseDialog()
         dialog.setOnChooseListener(object : AvatarChooseDialog.OnChooseListener {
@@ -194,73 +225,124 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         dialog.show(childFragmentManager, "AvatarChooseDialog")
     }
 
+    // 检查相机权限
     private fun checkCameraPermission() {
-        when {
-            ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                openCamera()
-            }
-            else -> {
-                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-            }
+        val hasPermission = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        android.util.Log.d("PersonalHome", "相机权限状态: $hasPermission")
+
+        if (hasPermission) {
+            openCamera()
+        } else {
+            android.util.Log.d("PersonalHome", "请求相机权限...")
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
+    // 检查存储权限
     private fun checkStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        val hasPermission = ContextCompat.checkSelfPermission(
+            requireContext(),
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+
+        android.util.Log.d("PersonalHome", "Android 版本: ${Build.VERSION.SDK_INT}")
+        android.util.Log.d("PersonalHome", "使用权限: $permission")
+        android.util.Log.d("PersonalHome", "存储权限状态: $hasPermission")
+
+        if (hasPermission) {
             openGallery()
         } else {
-            when {
-                ContextCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    openGallery()
-                }
-                else -> {
-                    storagePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                }
-            }
+            android.util.Log.d("PersonalHome", "请求存储权限...")
+            storagePermissionLauncher.launch(permission)
         }
     }
 
-    private fun openCamera() {
-        val photoFile = ImageUtils.createTempImageFile(requireContext())
-        tempPhotoUri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            photoFile
-        )
-        takePictureLauncher.launch(tempPhotoUri)
-    }
-
+    // 打开相册
     private fun openGallery() {
-        pickImageLauncher.launch("image/*")
+        try {
+            android.util.Log.d("PersonalHome", "========== 打开相册 ==========")
+            pickImageLauncher.launch("image/*")
+        } catch (e: Exception) {
+            android.util.Log.e("PersonalHome", "❌ 打开相册失败: ${e.message}")
+            e.printStackTrace()
+            showToast("打开相册失败: ${e.message}")
+        }
     }
 
-    private fun startCrop(sourceUri: Uri) {
-        val destinationUri = Uri.fromFile(
-            File(requireContext().cacheDir, "cropped_avatar_${System.currentTimeMillis()}.jpg")
-        )
+    // 打开相机
+    private fun openCamera() {
+        try {
+            android.util.Log.d("PersonalHome", "========== 打开相机 ==========")
 
-        val options = UCrop.Options().apply {
-            setCompressionQuality(80)
-            setHideBottomControls(false)
-            setFreeStyleCropEnabled(false)
-            setCircleDimmedLayer(true)
-            setShowCropFrame(false)
-            setShowCropGrid(false)
-            setToolbarTitle("裁剪头像")
+            val photoFile = ImageUtils.createTempImageFile(requireContext())
+            android.util.Log.d("PersonalHome", "临时文件路径: ${photoFile.absolutePath}")
+
+            tempPhotoUri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                photoFile
+            )
+
+            android.util.Log.d("PersonalHome", "临时照片 URI: $tempPhotoUri")
+            android.util.Log.d("PersonalHome", "Authority: ${requireContext().packageName}.fileprovider")
+
+            takePictureLauncher.launch(tempPhotoUri)
+        } catch (e: Exception) {
+            android.util.Log.e("PersonalHome", "❌ 打开相机失败: ${e.message}")
+            e.printStackTrace()
+            showToast("打开相机失败: ${e.message}")
         }
+    }
 
-        val uCrop = UCrop.of(sourceUri, destinationUri)
-            .withAspectRatio(1f, 1f)
-            .withMaxResultSize(800, 800)
-            .withOptions(options)
+    // 启动裁剪
+    private fun startCrop(sourceUri: Uri) {
+        try {
+            android.util.Log.d("PersonalHome", "========== 启动裁剪 ==========")
+            android.util.Log.d("PersonalHome", "源 URI: $sourceUri")
 
-        cropImageLauncher.launch(uCrop.getIntent(requireContext()))
+            val destinationUri = Uri.fromFile(
+                File(requireContext().cacheDir, "cropped_avatar_${System.currentTimeMillis()}.jpg")
+            )
+
+            android.util.Log.d("PersonalHome", "目标 URI: $destinationUri")
+
+            val options = UCrop.Options().apply {
+                setCompressionQuality(80)
+                setHideBottomControls(false)
+                setFreeStyleCropEnabled(false)
+                setCircleDimmedLayer(true)
+                setShowCropFrame(false)
+                setShowCropGrid(false)
+                setToolbarTitle("裁剪头像")
+                setToolbarColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+                setStatusBarColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+                setActiveControlsWidgetColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark))
+                setToolbarWidgetColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+            }
+
+            val uCrop = UCrop.of(sourceUri, destinationUri)
+                .withAspectRatio(1f, 1f)
+                .withMaxResultSize(800, 800)
+                .withOptions(options)
+
+            cropImageLauncher.launch(uCrop.getIntent(requireContext()))
+
+            android.util.Log.d("PersonalHome", "✅ 裁剪 Intent 启动成功")
+        } catch (e: Exception) {
+            android.util.Log.e("PersonalHome", "❌ 启动裁剪失败: ${e.message}")
+            e.printStackTrace()
+            showToast("启动裁剪失败: ${e.message}")
+        }
     }
 
     private fun showToast(message: String) {

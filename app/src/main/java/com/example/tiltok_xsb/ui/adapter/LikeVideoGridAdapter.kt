@@ -1,0 +1,62 @@
+package com.example.tiltok_xsb.ui.adapter
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.example.tiltok_xsb.databinding.ItemLikeGridBinding
+import com.example.tiltok_xsb.data.model.VideoBean
+
+class VideoGridAdapter(
+    private val videoList: List<VideoBean>,
+    private val showLock: Boolean = false,
+    private val onItemClick: (VideoBean, Int) -> Unit
+) : RecyclerView.Adapter<VideoGridAdapter.VideoGridViewHolder>() {
+
+    inner class VideoGridViewHolder(val binding: ItemLikeGridBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(video: VideoBean, position: Int) {
+            // 加载封面
+            Glide.with(binding.ivCover)
+                .load(video.coverRes)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .placeholder(com.example.tiltok_xsb.R.drawable.loading)
+                .error(com.example.tiltok_xsb.R.drawable.default_error)
+                .into(binding.ivCover)
+
+            // 播放次数
+            binding.tvPlayCount.text = formatCount(video.likeCount)
+
+            // 点击事件
+            binding.root.setOnClickListener {
+                onItemClick(video, position)
+            }
+        }
+
+        private fun formatCount(count: Int): String {
+            return when {
+                count >= 10000 -> String.format("%.1fw", count / 10000.0)
+                count >= 1000 -> String.format("%.1fk", count / 1000.0)
+                else -> count.toString()
+            }
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoGridViewHolder {
+        val binding = ItemLikeGridBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return VideoGridViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: VideoGridViewHolder, position: Int) {
+        holder.bind(videoList[position], position)
+    }
+
+    override fun getItemCount(): Int = videoList.size
+}

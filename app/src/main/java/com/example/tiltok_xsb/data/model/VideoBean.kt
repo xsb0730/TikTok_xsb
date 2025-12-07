@@ -12,6 +12,7 @@ data class VideoBean(
 
     var isLiked: Boolean = false,       // 是否点赞
     var isCollected:Boolean=false,      // 是否收藏
+    var isPrivate: Boolean = false,
     var distance: Float = 0f,           // 距离
     var likeCount: Int = 0,
     var commentCount: Int = 0,

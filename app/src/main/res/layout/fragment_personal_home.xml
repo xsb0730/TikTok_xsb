@@ -33,7 +33,7 @@
                     <ImageView
                         android:id="@+id/ivBg"
                         android:layout_width="match_parent"
-                        android:layout_height="450dp"
+                        android:layout_height="400dp"
                         android:scaleType="centerCrop"
                         android:contentDescription="@string/user_background_image"
                         tools:src="@drawable/personal_home_background"/>

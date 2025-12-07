@@ -35,16 +35,19 @@ class AvatarChooseDialog : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // 拍照按钮
         binding.tvCamera.setOnClickListener {
             listener?.onCamera()
             dismiss()
         }
 
+        // 相册按钮
         binding.tvGallery.setOnClickListener {
             listener?.onGallery()
             dismiss()
         }
 
+        // 取消按钮
         binding.tvCancel.setOnClickListener {
             dismiss()
         }
