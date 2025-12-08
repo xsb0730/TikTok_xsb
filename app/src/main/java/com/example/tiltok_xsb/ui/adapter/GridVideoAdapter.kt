@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.example.tiltok_xsb.R
-import com.example.tiltok_xsb.databinding.ItemGridvideoBinding
+import com.example.tiltok_xsb.databinding.ItemGridVideoBinding
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.base.BaseAdapter
 import com.example.tiltok_xsb.ui.adapter.GridVideoAdapter.GridVideoViewHolder
@@ -16,12 +16,12 @@ import java.util.Locale
 
 
 class GridVideoAdapter(private val context: Context,
-                       private val onItemClick: (VideoBean, Int,ItemGridvideoBinding) -> Unit,
+                       private val onItemClick: (VideoBean, Int,ItemGridVideoBinding) -> Unit,
                        private val onAvatarClick: (VideoBean, Int) -> Unit,
                        private val onLikeClick: (VideoBean, Int) -> Unit) : BaseAdapter<GridVideoViewHolder, VideoBean>(VideoDiff()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GridVideoViewHolder {
-        return GridVideoViewHolder(ItemGridvideoBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        return GridVideoViewHolder(ItemGridVideoBinding.inflate(LayoutInflater.from(parent.context), parent, false))
     }
 
     //绑定数据到ViewHolder
@@ -118,5 +118,5 @@ class GridVideoAdapter(private val context: Context,
     }
 
 
-    inner class GridVideoViewHolder(val binding: ItemGridvideoBinding) : RecyclerView.ViewHolder(binding.root)
+    inner class GridVideoViewHolder(val binding: ItemGridVideoBinding) : RecyclerView.ViewHolder(binding.root)
 }

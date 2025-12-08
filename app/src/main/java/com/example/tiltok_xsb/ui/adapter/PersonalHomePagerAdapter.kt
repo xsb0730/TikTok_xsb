@@ -1,23 +1,20 @@
 package com.example.tiltok_xsb.ui.adapter
 
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentPagerAdapter
-import com.example.tiltok_xsb.ui.fragment.VideoListFragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.example.tiltok_xsb.ui.fragment.PersonalLikeFragment
 
-class PersonalHomePagerAdapter(
-    fm: FragmentManager
-) : FragmentPagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+class PersonalHomePagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
     private val titles = arrayOf("作品", "推荐", "收藏", "喜欢")
 
-    override fun getCount(): Int = titles.size
+    override fun getItemCount(): Int = titles.size
 
-    override fun getItem(position: Int): Fragment {
-        return VideoListFragment.newInstance(position)
+    override fun createFragment(position: Int): Fragment {
+        return PersonalLikeFragment.newInstance(position)
     }
 
-    override fun getPageTitle(position: Int): CharSequence {
+    fun getPageTitle(position: Int): String {
         return titles[position]
     }
 }

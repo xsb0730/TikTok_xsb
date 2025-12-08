@@ -10,14 +10,12 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
-import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.databinding.FragmentRecommendBinding
-import com.example.tiltok_xsb.databinding.ItemGridvideoBinding
+import com.example.tiltok_xsb.databinding.ItemGridVideoBinding
 import com.example.tiltok_xsb.ui.activity.VideoPlayActivity
 import com.example.tiltok_xsb.ui.adapter.GridVideoAdapter
 import com.example.tiltok_xsb.ui.viewmodel.RecommendViewModel
 import com.example.tiltok_xsb.utils.Resource
-import com.example.tiltok_xsb.utils.SwipeGestureHelper
 
 class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({FragmentRecommendBinding.inflate(it)}), IScrollToTop {
 
@@ -28,24 +26,21 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     private var isLoading=false
     //是否是首次加载
     private var isFirstLoad = true
-    //手势检测器
-    private var swipeGestureHelper: SwipeGestureHelper? = null
 
     // 标记是否还有更多数据
     private var hasMoreData = true
     // 上次触发加载的时间戳（防抖）
     private var lastLoadTime = 0L
     // 加载间隔（毫秒）
-    private val LOAD_INTERVAL = 1000L
+    private val loadInterval = 1000L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initRecyclerView()
         setRefreshEvent()
         setupLoadMore()
         observeViewModel()
-        setupSwipeGesture()
 
         viewModel.loadRecommendVideos(isRefresh = true)
 
@@ -59,9 +54,9 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         //初始化适配器并绑定数据
         adapter= GridVideoAdapter(
             context=requireContext(),
-            onItemClick = { video, position, itemBinding->
+            onItemClick = { _, position, itemBinding->
                 // 启动带共享元素的转场动画
-                startVideoPlayWithTransition(video, position, itemBinding)
+                startVideoPlayWithTransition(position, itemBinding)
             },
             onAvatarClick = { video, _ ->
                 // 点击头像跳转到作者页面
@@ -81,9 +76,8 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
 
     // 启动带共享元素转场的视频播放页面
     private fun startVideoPlayWithTransition(
-        video: VideoBean,
         position: Int,
-        itemBinding: ItemGridvideoBinding
+        itemBinding: ItemGridVideoBinding
     ) {
         val videoList = viewModel.getCurrentVideoList()
 
@@ -106,23 +100,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
             position,
             options.toBundle()
         )
-    }
-
-
-    //设置滑动手势
-    private fun setupSwipeGesture() {
-        swipeGestureHelper = SwipeGestureHelper(
-            context = requireContext(),
-            onSwipeLeft = {
-                // 推荐页已是最后一页
-                Toast.makeText(context, "已经是最后一页了", Toast.LENGTH_SHORT).show()
-            },
-            onSwipeRight = {
-                // 向右滑动，切换到同城页
-                (parentFragment as? MainFragment)?.switchTab(0)
-            }
-        )
-        swipeGestureHelper?.attachToRecyclerView(binding.recyclerView)
     }
 
 
@@ -152,7 +129,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
 
                 // 距离上次加载不足 1 秒则不触发
                 val currentTime = System.currentTimeMillis()
-                if (currentTime - lastLoadTime < LOAD_INTERVAL) {
+                if (currentTime - lastLoadTime < loadInterval) {
                     return
                 }
 
@@ -299,7 +276,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
 
     override fun onDestroyView() {
         super.onDestroyView()
-        swipeGestureHelper = null
         adapter = null
     }
 }

@@ -21,7 +21,7 @@
             android:scaleType="centerCrop"
             android:contentDescription="@string/video_cover"/>
 
-        <!-- 播放次数 -->
+        <!-- 左下角：红心 + 点赞数 -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -31,19 +31,22 @@
             android:padding="6dp"
             android:gravity="center_vertical">
 
+            <!-- 红心图标 -->
             <com.example.tiltok_xsb.ui.view.IconFontTextView
+                android:id="@+id/iv_like"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/icon_play"
-                android:textColor="@color/white"
-                android:textSize="12sp"
+                android:text="@string/icon_like_fill"
+                android:textColor="#FF2D55"
+                android:textSize="14sp"
                 android:shadowColor="#80000000"
                 android:shadowDx="1"
                 android:shadowDy="1"
                 android:shadowRadius="2"/>
 
+            <!-- 点赞数 -->
             <TextView
-                android:id="@+id/tv_play_count"
+                android:id="@+id/tv_like_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="1.3万"
@@ -55,7 +58,6 @@
                 android:shadowDy="1"
                 android:shadowRadius="2"/>
         </LinearLayout>
-
 
     </RelativeLayout>
 

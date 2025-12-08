@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.core.view.ViewCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -49,11 +48,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 putExtra(KEY_POSITION, position)
             }
             context.startActivity(intent, options)
-        }
-
-        // 原有的启动方法(不带转场）
-        fun start(context: Context, videoList: ArrayList<VideoBean>, position: Int) {
-            startWithTransition(context, videoList, position, null)
         }
     }
 
@@ -103,14 +97,13 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             onCommentClick = { video, position ->
                 showCommentDialog(video, position)
             },
-            onCoverUpdate = { position, coverRes ->
-                // ✅ 只在首次进入时处理封面（转场动画）
+            onCoverUpdate = { _, coverRes ->
+                // 只在首次进入时处理封面（转场动画）
                 if (isFirstEnter && coverRes == null) {
                     android.util.Log.d("VideoPlayActivity", "首次进入，视频开始播放，隐藏封面")
                     hideCover()
                     isFirstEnter = false  // 标记已经不是首次进入
                 }
-                // ✅ 上下滑动时不显示封面，所以这里不处理 coverRes 不为 null 的情况
             }
         )
 
@@ -137,7 +130,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
                 currentPosition = position
-
                 videoPlayAdapter?.onPageSelected(position)
             }
         })
@@ -195,33 +187,59 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     // 设置触摸监听
     private fun setupTouchHelper() {
         touchHelper = VideoPlayTouchHelper(
-            context = this,
             viewPager = binding.viewPager,
+            refreshIcon = binding.ivRefreshIcon,
             onPullDown = { distance ->
-                // 下拉时更新提示文字
-                val alpha = (distance / 300f).coerceIn(0f, 1f)
-                binding.tvRefreshHint.alpha = alpha
-                binding.tvRefreshHint.text = if (distance > 200f) "释放刷新" else "下拉刷新"
-            },
-            onPullUp = { distance ->
-                // 上拉时更新提示文字
-                val alpha = (distance / 300f).coerceIn(0f, 1f)
-                binding.tvLoadMoreHint.alpha = alpha
-                binding.tvLoadMoreHint.text = if (distance > 200f) "释放加载" else "上拉加载更多"
-            },
-            onRefresh = {
-                // 触发刷新
-                if (!isRefreshing) {
-                    isRefreshing = true
-                    binding.tvRefreshHint.text = "正在刷新..."
-                    viewModel.refreshVideos()
+                // 下拉刷新动画
+                val progress = (distance / 200f).coerceIn(0f, 1f)
+
+                // 容器透明度和位置
+                binding.refreshContainer.alpha = progress
+                binding.refreshContainer.translationY = distance * 0.5f
+
+                // 新增：视频区域同步向下移动
+                binding.viewPager.translationY = distance
+                binding.ivGlobalCover.translationY = distance
+
+                // 根据距离更新文字和颜色
+                when {
+                    distance >= 200f -> {
+                        binding.tvRefreshHint.text = "松手即可刷新 ↓"
+                        binding.tvRefreshHint.setTextColor(
+                            android.graphics.Color.parseColor("#00FF00")
+                        )
+                    }
+                    distance >= 100f -> {
+                        binding.tvRefreshHint.text = "继续下拉 ↓"
+                        binding.tvRefreshHint.setTextColor(android.graphics.Color.WHITE)
+                    }
+                    else -> {
+                        binding.tvRefreshHint.text = "下拉刷新"
+                        binding.tvRefreshHint.setTextColor(android.graphics.Color.WHITE)
+                    }
                 }
             },
+
+            onRefresh = {
+                if (!isRefreshing) {
+                    isRefreshing = true
+
+                    // 更新UI状态
+                    binding.tvRefreshHint.text = "正在刷新..."
+                    binding.tvRefreshHint.setTextColor(android.graphics.Color.WHITE)
+                    binding.ivRefreshIcon.visibility = View.GONE
+                    binding.pbRefreshLoading.visibility = View.VISIBLE
+
+                    viewModel.refreshVideos()
+                    android.util.Log.d("VideoPlayActivity", "开始刷新")
+                }
+            },
+
             onLoadMore = {
                 // 触发加载更多
-                if (!isLoadingMore) {
+                if (!isLoadingMore && !isRefreshing) {
                     isLoadingMore = true
-                    binding.tvLoadMoreHint.text = "正在加载..."
+                    android.util.Log.d("VideoPlayActivity", "开始加载更多")
                     viewModel.loadMoreVideos()
                 }
             }
@@ -242,15 +260,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         return super.dispatchTouchEvent(ev)
     }
 
-
-    // 获取 ViewPager2 中指定位置的 View
-    private fun getViewPagerItemAt(position: Int): View? {
-        val recyclerView = binding.viewPager.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
-        val viewHolder = recyclerView?.findViewHolderForAdapterPosition(position)
-        return viewHolder?.itemView?.findViewById(com.example.tiltok_xsb.R.id.iv_cover)
-    }
-
-
     //观察事件
     private fun observeViewModel() {
         // 观察刷新结果
@@ -258,22 +267,47 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             when (resource) {
                 is Resource.Loading -> {
                     android.util.Log.d("VideoPlayActivity", "正在刷新...")
-                    // 显示加载状态
-                    binding.tvRefreshHint.text = "正在刷新..."
-                    binding.tvRefreshHint.alpha = 1f
                 }
+
                 is Resource.Success -> {
                     isRefreshing = false
+
+                    // 停止图标旋转动画
+                    touchHelper?.stopRefreshAnimation()
+
+                    // 动画收起刷新提示
+                    binding.refreshContainer.animate()
+                        .alpha(0f)
+                        .translationY(0f)
+                        .setDuration(300)
+                        .withEndAction {
+                            binding.ivRefreshIcon.visibility = View.VISIBLE
+                            binding.pbRefreshLoading.visibility = View.GONE
+                            binding.tvRefreshHint.text = "下拉刷新"
+                            binding.tvRefreshHint.setTextColor(android.graphics.Color.WHITE)
+                        }
+                        .start()
+                    // 视频区域同步回弹
+                    binding.viewPager.animate()
+                        .translationY(0f)
+                        .setDuration(300)
+                        .start()
+
+                    binding.ivGlobalCover.animate()
+                        .translationY(0f)
+                        .setDuration(300)
+                        .start()
 
                     resource.data?.let { newVideos ->
                         android.util.Log.d("VideoPlayActivity", "刷新成功，获取到 ${newVideos.size} 条视频")
 
+                        // 保存当前位置
                         val currentPos = currentPosition
 
-                        // 先暂停当前视频
+                        // 暂停当前视频
                         videoPlayAdapter?.pauseCurrentVideo()
 
-                        // 等待暂停生效
+                        // 延迟更新数据（避免闪烁）
                         binding.viewPager.postDelayed({
                             // 更新数据
                             videoList.clear()
@@ -282,44 +316,59 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                             // 释放旧资源
                             videoPlayAdapter?.releaseAllVideos()
 
-                            // 通知数据变化
-                            videoPlayAdapter?.notifyDataSetChanged()
+                            // 通知适配器
+                            videoPlayAdapter?.notifyItemRangeChanged(0, newVideos.size)
 
+                            // 确定安全位置
                             val safePosition = if (currentPos < videoList.size) currentPos else 0
                             currentPosition = safePosition
 
-                            // 加载新封面
-                            loadCoverForPosition(safePosition)
-
-                            // 多级延迟确保 ViewHolder 创建完成
+                            // 刷新后不显示封面（因为不是首次进入）
+                            // 直接播放视频
                             binding.viewPager.postDelayed({
-                                // 设置位置
                                 if (binding.viewPager.currentItem != safePosition) {
                                     binding.viewPager.setCurrentItem(safePosition, false)
                                 }
 
-                                // 再延迟播放
                                 binding.viewPager.postDelayed({
-                                    android.util.Log.d("VideoPlayActivity", "开始播放 position=$safePosition")
                                     videoPlayAdapter?.onPageSelected(safePosition)
                                 }, 200)
-                            }, 300)
+                            }, 100)
                         }, 100)
 
-                        // 隐藏刷新提示
-                        binding.tvRefreshHint.animate()
-                            .alpha(0f)
-                            .setDuration(300)
-                            .start()
                         Toast.makeText(this, "刷新成功", Toast.LENGTH_SHORT).show()
                     }
                 }
+
                 is Resource.Error -> {
                     isRefreshing = false
-                    binding.tvRefreshHint.animate()
+
+                    // 停止动画并快速收起
+                    touchHelper?.stopRefreshAnimation()
+
+                    binding.refreshContainer.animate()
                         .alpha(0f)
-                        .setDuration(300)
+                        .translationY(0f)
+                        .setDuration(200)
+                        .withEndAction {
+                            binding.ivRefreshIcon.visibility = View.VISIBLE
+                            binding.pbRefreshLoading.visibility = View.GONE
+                            binding.tvRefreshHint.text = "下拉刷新"
+                            binding.tvRefreshHint.setTextColor(android.graphics.Color.WHITE)
+                        }
                         .start()
+
+                    // 视频区域同步快速回弹
+                    binding.viewPager.animate()
+                        .translationY(0f)
+                        .setDuration(200)
+                        .start()
+
+                    binding.ivGlobalCover.animate()
+                        .translationY(0f)
+                        .setDuration(200)
+                        .start()
+
                     Toast.makeText(this, resource.message ?: "刷新失败", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -329,22 +378,37 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         viewModel.loadMoreResult.observe(this) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // 加载中
+                    android.util.Log.d("VideoPlayActivity", "正在加载更多...")
                 }
+
                 is Resource.Success -> {
                     isLoadingMore = false
-                    binding.tvLoadMoreHint.alpha = 0f
 
                     resource.data?.let { newVideos ->
-                        val startPosition = videoList.size
-                        videoList.addAll(newVideos)  // 追加到末尾
-                        videoPlayAdapter?.notifyItemRangeInserted(startPosition, newVideos.size)
-                        Toast.makeText(this, "加载了 ${newVideos.size} 条视频", Toast.LENGTH_SHORT).show()
+                        if (newVideos.isNotEmpty()) {
+                            val startPosition = videoList.size
+                            videoList.addAll(newVideos)  // 追加到末尾
+                            videoPlayAdapter?.notifyItemRangeInserted(startPosition, newVideos.size)
+
+                            // 重置加载状态，允许再次触发
+                            touchHelper?.resetLoadMoreState()
+
+                            android.util.Log.d("VideoPlayActivity", "加载了 ${newVideos.size} 条视频，当前总数: ${videoList.size}")
+                            Toast.makeText(this, "加载了 ${newVideos.size} 条视频", Toast.LENGTH_SHORT).show()
+                        } else {
+                            android.util.Log.d("VideoPlayActivity", "没有更多数据了")
+                            Toast.makeText(this, "没有更多数据了", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
+
                 is Resource.Error -> {
                     isLoadingMore = false
-                    binding.tvLoadMoreHint.alpha = 0f
+
+                    // 失败后也重置状态，允许重试
+                    touchHelper?.resetLoadMoreState()
+
+                    android.util.Log.e("VideoPlayActivity", "加载失败: ${resource.message}")
                     Toast.makeText(this, resource.message ?: "加载失败", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -406,7 +470,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             onCommentCountChanged = { newCount ->
 
                 // 更新 VideoBean 中的评论数
-                videoList?.getOrNull(position)?.let {
+                videoList.getOrNull(position)?.let {
                     it.commentCount = newCount
                 }
 
@@ -425,7 +489,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     //释放
     override fun onDestroy() {
         super.onDestroy()
-
+        touchHelper?.release()
+        touchHelper = null
         //释放资源
         videoPlayAdapter?.releaseAllVideos()
     }

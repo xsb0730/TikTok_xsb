@@ -60,7 +60,6 @@
                             android:src="@mipmap/return_white"
                             android:background="@drawable/shape_circle_half_white"
                             android:padding="8dp"
-                            android:layout_marginStart="10dp"
                             android:layout_centerVertical="true"
                             android:contentDescription="@string/back_button"
                             tools:ignore="RtlHardcoded"/>
@@ -127,7 +126,7 @@
                 app:tabIndicatorGravity="bottom"/>
         </com.google.android.material.appbar.AppBarLayout>
 
-        <androidx.viewpager.widget.ViewPager
+        <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewPager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -70,5 +70,14 @@
     <string name="example_likes">520</string>
     <string name="example_following">13</string>
     <string name="example_followers">14</string>
+    <!-- 导航相关 -->
+    <string name="back">返回</string>
+    <string name="search">搜索</string>
+    <string name="same_city">同城</string>
+    <string name="recommend">推荐</string>
+    <!-- 刷新提示 -->
+    <string name="pull_to_refresh">下拉刷新</string>
+    <string name="pull_to_load_more">上拉加载更多</string>
+    <string name="refresh_icon">刷新动画</string>
 
 </resources>

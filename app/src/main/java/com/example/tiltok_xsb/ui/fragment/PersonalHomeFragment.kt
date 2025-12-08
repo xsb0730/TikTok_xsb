@@ -22,6 +22,7 @@ import com.example.tiltok_xsb.ui.view.AvatarChooseDialog
 import com.example.tiltok_xsb.ui.viewmodel.PersonalHomeViewModel
 import com.example.tiltok_xsb.utils.ImageUtils
 import com.example.tiltok_xsb.utils.Resource
+import com.google.android.material.tabs.TabLayoutMediator
 import com.yalantis.ucrop.UCrop
 import java.io.File
 
@@ -125,9 +126,13 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
 
     // 设置 ViewPager 和 TabLayout
     private fun setupViewPager() {
-        val adapter = PersonalHomePagerAdapter(childFragmentManager)
+        val adapter = PersonalHomePagerAdapter(this)  // 传入 Fragment
         binding.viewPager.adapter = adapter
-        binding.tabLayout.setupWithViewPager(binding.viewPager)
+
+        // 使用 TabLayoutMediator 连接 TabLayout 和 ViewPager2
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = adapter.getPageTitle(position)
+        }.attach()
     }
 
     // 观察 ViewModel 数据变化

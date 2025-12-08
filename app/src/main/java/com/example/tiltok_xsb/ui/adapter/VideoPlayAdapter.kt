@@ -210,7 +210,7 @@ class VideoPlayAdapter(
             )
 
             // 检查 videoRes 是否为空
-            if (video.videoRes.isNullOrEmpty()) {
+            if (video.videoRes.isEmpty()) {
                 android.util.Log.e("VideoPlayAdapter", "❌ videoRes 为空或 null！")
                 Toast.makeText(binding.root.context, "视频路径为空", Toast.LENGTH_SHORT).show()
                 return
@@ -416,6 +416,14 @@ class VideoPlayAdapter(
                     Player.STATE_ENDED -> {
                         android.util.Log.d("VideoPlayAdapter", "[pos=$currentPosition] 重新播放")
                         player.seekTo(0)
+                    }
+
+                    Player.STATE_BUFFERING -> {
+
+                    }
+
+                    Player.STATE_READY -> {
+
                     }
                 }
 

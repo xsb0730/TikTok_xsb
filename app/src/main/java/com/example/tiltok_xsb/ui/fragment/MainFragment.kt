@@ -1,10 +1,7 @@
 package com.example.tiltok_xsb.ui.fragment
 
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
@@ -31,7 +28,7 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
         setFragment()
         setMainMenu()
-        setupSearchClick()
+
     }
 
     //设置顶部Tab和ViewPager2
@@ -69,16 +66,9 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         }
         tabLayoutMediator?.attach()
 
-        //动态设置文字居中
+        // 设置默认选中推荐页
         binding.viewPager.post {
-            for (i in 0 until binding.tabTitle.tabCount) {
-                val tab = binding.tabTitle.getTabAt(i)
-                val tabView = (tab?.view as? ViewGroup)?.getChildAt(1) as? TextView
-                tabView?.gravity = Gravity.CENTER
-            }
             binding.viewPager.setCurrentItem(1, false)
-
-            //默认选中推荐页
             videoPlayStateLiveData.value = true
         }
 
@@ -113,13 +103,6 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
                 scrollToTop(tab?.position?:0)
             }
         })
-    }
-
-    //切换到指定 Tab
-    fun switchTab(position: Int) {
-        if (position in 0 until fragments.size) {
-            binding.viewPager.setCurrentItem(position, true)  // true = 平滑滚动
-        }
     }
 
     //滚动到顶部
@@ -196,12 +179,6 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
             .replace(android.R.id.content, personalHomeFragment)
             .addToBackStack(null)
             .commit()
-    }
-
-    private fun setupSearchClick(){
-        binding.ivSearch.setOnClickListener{
-            Toast.makeText(context, "搜索功能待实现", Toast.LENGTH_SHORT).show()
-        }
     }
 
     override fun onDestroyView() {

@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 
 class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository()):ViewModel() {
 
-
     private val _likeResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isLiked>
     val likeResult: LiveData<Pair<Int, Boolean>> = _likeResult
 
