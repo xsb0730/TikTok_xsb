@@ -25,6 +25,7 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
     private var pagerAdapter:CommPagerAdapter? = null
     private var tabLayoutMediator:TabLayoutMediator? = null
 
+    //设置监听器、初始化 UI
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -99,6 +100,7 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
 
+            // 已选中的 Tab 再次点击
             override fun onTabReselected(tab: TabLayout.Tab?) {
                 scrollToTop(tab?.position?:0)
             }

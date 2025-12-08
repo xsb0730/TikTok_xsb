@@ -31,9 +31,6 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-
-
-
     private var currentPage = 1
     private val pageSize = 20
     private val allVideos = mutableListOf<VideoBean>()

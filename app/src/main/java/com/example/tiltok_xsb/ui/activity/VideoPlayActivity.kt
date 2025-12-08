@@ -63,20 +63,19 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         receivedList?.let {
             videoList.clear()
             videoList.addAll(it)
-            android.util.Log.d("VideoPlayActivity", "✅ 接收到 ${videoList.size} 条视频数据")
         }
 
+        // 数据校验
         if (videoList.isEmpty()) {
-            android.util.Log.e("VideoPlayActivity", "❌ 视频列表为空！")
             Toast.makeText(this, "没有视频数据", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        setupViewPager()
-        setupClickListeners()
-        setupTouchHelper()
-        observeViewModel()
+        setupViewPager()            // 设置 ViewPager2
+        setupClickListeners()       // 设置点击事件
+        setupTouchHelper()          // 设置触摸手势（下拉刷新/上拉加载）
+        observeViewModel()          // 观察数据变化
 
         // 初始化封面
         if (isFirstEnter) {
@@ -89,8 +88,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
     //设置页面
     private fun setupViewPager() {
-        android.util.Log.d("VideoPlayActivity", "========== 设置 ViewPager2 ==========")
-
         videoPlayAdapter = VideoPlayAdapter(
             videoList,
             viewModel,
@@ -100,9 +97,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             onCoverUpdate = { _, coverRes ->
                 // 只在首次进入时处理封面（转场动画）
                 if (isFirstEnter && coverRes == null) {
-                    android.util.Log.d("VideoPlayActivity", "首次进入，视频开始播放，隐藏封面")
-                    hideCover()
-                    isFirstEnter = false  // 标记已经不是首次进入
+                    hideCover()            //隐藏封面
+                    isFirstEnter = false   // 标记已经不是首次进入
                 }
             }
         )
@@ -118,7 +114,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 recyclerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                 recyclerView.post {
-                    android.util.Log.d("VideoPlayActivity", "开始播放视频")
                     videoPlayAdapter?.onPageSelected(currentPosition)
 
                     supportStartPostponedEnterTransition()
@@ -135,11 +130,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         })
     }
 
-
     // 加载指定位置的封面
     private fun loadCoverForPosition(position: Int) {
-        android.util.Log.d("VideoPlayActivity", "加载 position=$position 的封面（用于转场动画）")
-
         val video = videoList.getOrNull(position) ?: return
 
         // 显示封面
@@ -160,7 +152,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 .into(binding.ivGlobalCover)
         }
     }
-
 
     // 隐藏封面
     private fun hideCover() {
@@ -231,7 +222,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                     binding.pbRefreshLoading.visibility = View.VISIBLE
 
                     viewModel.refreshVideos()
-                    android.util.Log.d("VideoPlayActivity", "开始刷新")
                 }
             },
 
@@ -239,7 +229,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 // 触发加载更多
                 if (!isLoadingMore && !isRefreshing) {
                     isLoadingMore = true
-                    android.util.Log.d("VideoPlayActivity", "开始加载更多")
                     viewModel.loadMoreVideos()
                 }
             }
@@ -266,7 +255,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         viewModel.refreshResult.observe(this) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    android.util.Log.d("VideoPlayActivity", "正在刷新...")
                 }
 
                 is Resource.Success -> {
@@ -299,7 +287,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                         .start()
 
                     resource.data?.let { newVideos ->
-                        android.util.Log.d("VideoPlayActivity", "刷新成功，获取到 ${newVideos.size} 条视频")
 
                         // 保存当前位置
                         val currentPos = currentPosition
@@ -378,7 +365,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         viewModel.loadMoreResult.observe(this) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    android.util.Log.d("VideoPlayActivity", "正在加载更多...")
+
                 }
 
                 is Resource.Success -> {
@@ -393,10 +380,9 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                             // 重置加载状态，允许再次触发
                             touchHelper?.resetLoadMoreState()
 
-                            android.util.Log.d("VideoPlayActivity", "加载了 ${newVideos.size} 条视频，当前总数: ${videoList.size}")
                             Toast.makeText(this, "加载了 ${newVideos.size} 条视频", Toast.LENGTH_SHORT).show()
                         } else {
-                            android.util.Log.d("VideoPlayActivity", "没有更多数据了")
+
                             Toast.makeText(this, "没有更多数据了", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -408,7 +394,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                     // 失败后也重置状态，允许重试
                     touchHelper?.resetLoadMoreState()
 
-                    android.util.Log.e("VideoPlayActivity", "加载失败: ${resource.message}")
                     Toast.makeText(this, resource.message ?: "加载失败", Toast.LENGTH_SHORT).show()
                 }
             }

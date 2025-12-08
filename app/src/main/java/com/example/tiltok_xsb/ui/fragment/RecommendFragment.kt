@@ -26,7 +26,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     private var isLoading=false
     //是否是首次加载
     private var isFirstLoad = true
-
     // 标记是否还有更多数据
     private var hasMoreData = true
     // 上次触发加载的时间戳（防抖）
@@ -37,10 +36,10 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        initRecyclerView()
-        setRefreshEvent()
-        setupLoadMore()
-        observeViewModel()
+        initRecyclerView()      //设置 RecyclerView（双列瀑布流）
+        setRefreshEvent()       //设置下拉刷新
+        setupLoadMore()         //设置上拉加载更多
+        observeViewModel()      //观察 ViewModel 数据变化
 
         viewModel.loadRecommendVideos(isRefresh = true)
 
@@ -58,20 +57,17 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                 // 启动带共享元素的转场动画
                 startVideoPlayWithTransition(position, itemBinding)
             },
-            onAvatarClick = { video, _ ->
+            onAvatarClick = { _, _ ->
                 // 点击头像跳转到作者页面
-                Toast.makeText(context, "进入 ${video.userBean?.nickName} 的主页", Toast.LENGTH_SHORT).show()
-
             },
-            onLikeClick = { video, position ->
+            onLikeClick = { _, _ ->
                 // 点赞
-                viewModel.toggleLike(video, position)
             }
         )
 
         //性能优化
         binding.recyclerView.adapter=adapter
-        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.setHasFixedSize(true)      //RecyclerView 大小固定
     }
 
     // 启动带共享元素转场的视频播放页面
@@ -143,7 +139,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
 
                 //滚动到倒数第三行加载更多
                 if(lastVisibleItem>=totalItemCount-4&&totalItemCount>0){
-                    android.util.Log.d("RecommendFragment", "触发加载更多: lastVisibleItem=$lastVisibleItem, total=$totalItemCount")
                     isLoading = true
                     lastLoadTime = currentTime
                     viewModel.loadMore()
@@ -155,6 +150,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     //观察视频列表
     private fun observeViewModel() {
 
+        //下拉刷新
         viewModel.videoList.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
@@ -187,7 +183,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         viewModel.loadMoreResult.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    android.util.Log.d("RecommendFragment", "正在加载更多...")
+
                 }
                 is Resource.Success -> {
                     resource.data?.let { newVideos ->
@@ -202,11 +198,8 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                             val firstVisibleItems = IntArray(2)
                             layoutManager.findFirstVisibleItemPositions(firstVisibleItems)
                             val firstVisiblePosition = firstVisibleItems.minOrNull() ?: 0
-
                             val firstView = layoutManager.findViewByPosition(firstVisiblePosition)
                             val topOffset = firstView?.top ?: 0
-
-                            android.util.Log.d("RecommendFragment", "添加数据前: position=$firstVisiblePosition, offset=$topOffset")
 
                             // 添加新数据
                             adapter?.appendList(newVideos)
@@ -214,7 +207,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                             // 恢复滚动位置
                             binding.recyclerView.post {
                                 layoutManager.scrollToPositionWithOffset(firstVisiblePosition, topOffset)
-                                android.util.Log.d("RecommendFragment", "恢复滚动位置完成")
                             }
                             Toast.makeText(context, "加载了 ${newVideos.size} 条数据", Toast.LENGTH_SHORT).show()
                         }
@@ -223,7 +215,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                     // 延迟重置 isLoading，确保数据渲染完成
                     binding.recyclerView.postDelayed({
                         isLoading = false
-                        android.util.Log.d("RecommendFragment", "加载更多完成，重置 isLoading")
                     }, 300)
                 }
 
@@ -257,6 +248,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         }
     }
 
+    //滚动到顶部
     override fun scrollToTop() {
         // 添加生命周期检查
         if (!isAdded || isDetached) {

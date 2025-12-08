@@ -3,7 +3,6 @@ package com.example.tiltok_xsb.ui.view
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -42,7 +41,6 @@ class CommentDialog(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d("CommentDialog", "onCreate 调用")
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
         binding = DialogCommentBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -62,7 +60,6 @@ class CommentDialog(
 
 
         // 加载评论列表
-        Log.d("CommentDialog", "开始加载评论，videoId: $videoId")
         viewModel.loadComments(videoId)
     }
 
@@ -179,7 +176,6 @@ class CommentDialog(
             when (resource) {
                 is Resource.Loading -> {
                     // 显示加载中
-                    Log.d("CommentDialog", "加载中...")
                 }
 
                 is Resource.Success -> {

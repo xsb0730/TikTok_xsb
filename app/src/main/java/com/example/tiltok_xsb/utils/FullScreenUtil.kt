@@ -9,7 +9,7 @@ import android.view.WindowManager
 
 object FullScreenUtil{
 
-    //设置全屏（隐藏状态栏和导航栏）
+    //设置全屏
     fun setFullScreen(activity:Activity){
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){
             activity.window.insetsController?.let{controller->

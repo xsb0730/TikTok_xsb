@@ -30,13 +30,13 @@ import java.io.File
 class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ FragmentPersonalHomeBinding.inflate(it) }) {
     private val viewModel: PersonalHomeViewModel by viewModels()
 
+    //临时存储拍照后的照片 URI
     private var tempPhotoUri: Uri? = null
 
     // 相机权限请求
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ){ granted ->
-        android.util.Log.d("PersonalHome", "相机权限结果: $granted")
         if (granted) {
             openCamera()
         } else {
@@ -48,7 +48,6 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     private val storagePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        android.util.Log.d("PersonalHome", "存储权限结果: $granted")
         if (granted) {
             openGallery()
         } else {
@@ -60,7 +59,6 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        android.util.Log.d("PersonalHome", "拍照结果: success=$success, uri=$tempPhotoUri")
         if (success && tempPhotoUri != null) {
             startCrop(tempPhotoUri!!)
         } else {
@@ -73,7 +71,6 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     )  { uri ->
-        android.util.Log.d("PersonalHome", "选择图片结果: $uri")
         if (uri != null) {
             startCrop(uri)
         } else {
@@ -85,22 +82,17 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     private val cropImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        android.util.Log.d("PersonalHome", "裁剪结果: resultCode=${result.resultCode}")
-
         when (result.resultCode) {
             Activity.RESULT_OK -> {
                 val croppedUri = result.data?.let { UCrop.getOutput(it) }
                 if (croppedUri != null) {
-                    android.util.Log.d("PersonalHome", "✅ 裁剪成功: $croppedUri")
                     viewModel.uploadAvatar(croppedUri)
                 } else {
-                    android.util.Log.e("PersonalHome", "❌ 裁剪失败：URI 为空")
                     showToast("裁剪失败")
                 }
             }
             UCrop.RESULT_ERROR -> {
                 val error = result.data?.let { UCrop.getError(it) }
-                android.util.Log.e("PersonalHome", "❌ 裁剪错误: ${error?.message}")
                 showToast("裁剪失败: ${error?.message}")
             }
             else -> {
@@ -112,16 +104,12 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        android.util.Log.d("PersonalHome", "========== Fragment 创建 ==========")
-        android.util.Log.d("PersonalHome", "Android 版本: ${Build.VERSION.SDK_INT}")
 
-        setupToolbar()
-        setupAvatarClick()
-        setupViewPager()
-        observeViewModel()
-
-        // 加载用户数据
-        viewModel.loadUserInfo()
+        setupToolbar()              //设置返回按钮和更多按钮
+        setupAvatarClick()          //设置头像点击事件
+        setupViewPager()            //设置 ViewPager 和 TabLayout
+        observeViewModel()          //观察 ViewModel 数据变化
+        viewModel.loadUserInfo()    // 加载个人主页用户数据
     }
 
     // 设置 ViewPager 和 TabLayout
@@ -237,12 +225,9 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
 
-        android.util.Log.d("PersonalHome", "相机权限状态: $hasPermission")
-
         if (hasPermission) {
             openCamera()
         } else {
-            android.util.Log.d("PersonalHome", "请求相机权限...")
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
@@ -260,14 +245,9 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
             permission
         ) == PackageManager.PERMISSION_GRANTED
 
-        android.util.Log.d("PersonalHome", "Android 版本: ${Build.VERSION.SDK_INT}")
-        android.util.Log.d("PersonalHome", "使用权限: $permission")
-        android.util.Log.d("PersonalHome", "存储权限状态: $hasPermission")
-
         if (hasPermission) {
             openGallery()
         } else {
-            android.util.Log.d("PersonalHome", "请求存储权限...")
             storagePermissionLauncher.launch(permission)
         }
     }
@@ -275,10 +255,8 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 打开相册
     private fun openGallery() {
         try {
-            android.util.Log.d("PersonalHome", "========== 打开相册 ==========")
             pickImageLauncher.launch("image/*")
         } catch (e: Exception) {
-            android.util.Log.e("PersonalHome", "❌ 打开相册失败: ${e.message}")
             e.printStackTrace()
             showToast("打开相册失败: ${e.message}")
         }
@@ -287,10 +265,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 打开相机
     private fun openCamera() {
         try {
-            android.util.Log.d("PersonalHome", "========== 打开相机 ==========")
-
             val photoFile = ImageUtils.createTempImageFile(requireContext())
-            android.util.Log.d("PersonalHome", "临时文件路径: ${photoFile.absolutePath}")
 
             tempPhotoUri = FileProvider.getUriForFile(
                 requireContext(),
@@ -298,12 +273,8 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
                 photoFile
             )
 
-            android.util.Log.d("PersonalHome", "临时照片 URI: $tempPhotoUri")
-            android.util.Log.d("PersonalHome", "Authority: ${requireContext().packageName}.fileprovider")
-
             takePictureLauncher.launch(tempPhotoUri)
         } catch (e: Exception) {
-            android.util.Log.e("PersonalHome", "❌ 打开相机失败: ${e.message}")
             e.printStackTrace()
             showToast("打开相机失败: ${e.message}")
         }
@@ -312,20 +283,15 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 启动裁剪
     private fun startCrop(sourceUri: Uri) {
         try {
-            android.util.Log.d("PersonalHome", "========== 启动裁剪 ==========")
-            android.util.Log.d("PersonalHome", "源 URI: $sourceUri")
-
             val destinationUri = Uri.fromFile(
                 File(requireContext().cacheDir, "cropped_avatar_${System.currentTimeMillis()}.jpg")
             )
 
-            android.util.Log.d("PersonalHome", "目标 URI: $destinationUri")
-
             val options = UCrop.Options().apply {
-                setCompressionQuality(80)
+                setCompressionQuality(80)           //压缩质量
                 setHideBottomControls(false)
                 setFreeStyleCropEnabled(false)
-                setCircleDimmedLayer(true)
+                setCircleDimmedLayer(true)          //圆形遮罩层
                 setShowCropFrame(false)
                 setShowCropGrid(false)
                 setToolbarTitle("裁剪头像")
@@ -336,15 +302,13 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
             }
 
             val uCrop = UCrop.of(sourceUri, destinationUri)
-                .withAspectRatio(1f, 1f)
-                .withMaxResultSize(800, 800)
+                .withAspectRatio(1f, 1f)                //1:1 裁剪比例
+                .withMaxResultSize(800, 800)     //最大输出尺寸
                 .withOptions(options)
 
             cropImageLauncher.launch(uCrop.getIntent(requireContext()))
 
-            android.util.Log.d("PersonalHome", "✅ 裁剪 Intent 启动成功")
         } catch (e: Exception) {
-            android.util.Log.e("PersonalHome", "❌ 启动裁剪失败: ${e.message}")
             e.printStackTrace()
             showToast("启动裁剪失败: ${e.message}")
         }

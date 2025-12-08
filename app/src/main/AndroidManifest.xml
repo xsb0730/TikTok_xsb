@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="SelectedPhotoAccess">
 
-    <!-- ============ 权限声明 ============ -->
+
     <!-- 相机权限 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Android 12 及以下使用 READ_EXTERNAL_STORAGE -->
@@ -48,7 +48,7 @@
             tools:ignore="DiscouragedApi,LockedOrientationActivity"
             android:exported="false"/>
 
-        <!-- UCrop Activity -->
+        <!-- 图片裁剪 -->
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="fullSensor"
@@ -56,7 +56,7 @@
             android:exported="false"
             tools:ignore="DiscouragedApi" />
 
-        <!-- FileProvider 配置 -->
+        <!-- 安全共享文件 -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
