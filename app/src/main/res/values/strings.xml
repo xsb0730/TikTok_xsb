@@ -39,6 +39,7 @@
     <!-- 地理位置 -->
     <string name="icon_location_fill">&#xe624;</string>
 
+
     <!-- ========== 个人主页相关 ========== -->
     <string name="user_background_image">用户背景图片</string>
     <string name="user_avatar">用户头像</string>
@@ -80,4 +81,7 @@
     <string name="pull_to_load_more">上拉加载更多</string>
     <string name="refresh_icon">刷新动画</string>
 
+    <string name="location_icon">坐标图</string>
+    <string name="avatar">头像</string>
+    <string name="like_icon">点赞图标</string>
 </resources>
