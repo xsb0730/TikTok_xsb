@@ -1,15 +1,20 @@
 package com.example.tiltok_xsb.ui.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tiltok_xsb.data.model.VideoBean
+import com.example.tiltok_xsb.data.repository.CommentRepository
 import com.example.tiltok_xsb.data.repository.VideoRepository
 import com.example.tiltok_xsb.utils.Resource
 import kotlinx.coroutines.launch
 
-class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository()):ViewModel() {
+class VideoPlayViewModel(application: Application): AndroidViewModel(application) {
+
+    private val videoRepository = VideoRepository()
+    private val commentRepository = CommentRepository(application)  // 添加评论仓库
 
     private val _likeResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isLiked>
     val likeResult: LiveData<Pair<Int, Boolean>> = _likeResult
@@ -43,10 +48,11 @@ class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository
             _refreshResult.value = Resource.Loading()
 
             currentPage = 1
-            val result = repository.getRecommendVideos(currentPage, pageSize)
+            val result = videoRepository.getRecommendVideos(currentPage, pageSize)
 
             if (result.isSuccess) {
                 val videos = result.getOrNull() ?: emptyList()
+                syncCommentCounts(videos)
                 _refreshResult.value = Resource.Success(videos)
                 currentPage++
             } else {
@@ -60,11 +66,12 @@ class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository
         viewModelScope.launch {
             _loadMoreResult.value = Resource.Loading()
 
-            val result = repository.getRecommendVideos(currentPage, pageSize)
+            val result = videoRepository.getRecommendVideos(currentPage, pageSize)
 
             if (result.isSuccess) {
                 val videos = result.getOrNull() ?: emptyList()
                 if (videos.isNotEmpty()) {
+                    syncCommentCounts(videos)
                     _loadMoreResult.value = Resource.Success(videos)
                     currentPage++
                 } else {
@@ -76,10 +83,29 @@ class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository
         }
     }
 
+    // 同步视频列表的评论数
+    private suspend fun syncCommentCounts(videos: List<VideoBean>) {
+        try {
+            val videoIds = videos.map { it.videoId }
+            val commentCounts = commentRepository.getCommentCountsForVideos(videoIds)
+
+            videos.forEach { video ->
+                video.commentCount = commentCounts[video.videoId] ?: 0
+            }
+
+            android.util.Log.d(
+                "VideoPlayViewModel",
+                "同步评论数完成: ${commentCounts.map { "${it.key}=${it.value}" }}"
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("VideoPlayViewModel", "同步评论数失败: ${e.message}")
+        }
+    }
+
     //点赞/取消点赞
     fun toggleLike(video: VideoBean, position: Int) {
         viewModelScope.launch {
-            val result = repository.toggleLike(video)
+            val result = videoRepository.toggleLike(video)
             if (result.isSuccess) {
                 video.isLiked = !video.isLiked
                 if (video.isLiked) {
@@ -97,7 +123,7 @@ class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository
     //收藏/取消收藏
     fun toggleCollect(video: VideoBean, position: Int) {
         viewModelScope.launch {
-            val result = repository.toggleCollect(video)
+            val result = videoRepository.toggleCollect(video)
 
             if (result.isSuccess) {
                 video.isCollected = !video.isCollected
@@ -120,7 +146,7 @@ class VideoPlayViewModel(private val repository: VideoRepository=VideoRepository
     fun followUser(video: VideoBean, position: Int) {
         viewModelScope.launch {
             val userId = video.userBean?.userId ?: return@launch
-            val result = repository.followUser(userId)
+            val result = videoRepository.followUser(userId)
             if (result.isSuccess) {
                 video.userBean?.isFollowed = true
                 _followResult.value = Pair(position, true)

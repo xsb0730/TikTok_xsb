@@ -1,5 +1,6 @@
 package com.example.tiltok_xsb.ui.view
 
+import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
@@ -46,7 +47,12 @@ class CommentDialog(
         binding = DialogCommentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel = ViewModelProvider(viewModelStoreOwner)[CommentViewModel::class.java]
+        viewModel = ViewModelProvider(
+            viewModelStoreOwner,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(
+                (context.applicationContext as Application)
+            )
+        )[CommentViewModel::class.java]
 
         setupDialog()
         setupWindowInsets()

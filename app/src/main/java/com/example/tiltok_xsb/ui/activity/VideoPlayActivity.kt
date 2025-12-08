@@ -197,7 +197,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 binding.refreshContainer.alpha = progress
                 binding.refreshContainer.translationY = distance * 0.5f
 
-                // 新增：视频区域同步向下移动
+                // 视频区域同步向下移动
                 binding.viewPager.translationY = distance
                 binding.ivGlobalCover.translationY = distance
 
@@ -468,7 +468,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
             // 传入评论数变化的回调
             onCommentCountChanged = { newCount ->
-
                 // 更新 VideoBean 中的评论数
                 videoList.getOrNull(position)?.let {
                     it.commentCount = newCount
@@ -483,6 +482,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         commentDialog.setOnDismissListener {
             videoPlayAdapter?.resumeCurrentVideo()
         }
+
         commentDialog.show()
     }
 
