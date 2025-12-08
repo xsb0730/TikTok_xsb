@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
 import androidx.viewpager2.widget.ViewPager2
+import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.base.CommPagerAdapter
 import com.example.tiltok_xsb.databinding.FragmentMainBinding
@@ -49,10 +51,8 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
             arrayOf("同城","推荐")
         )
         binding.viewPager.adapter=pagerAdapter
-
         //预加载所有页面
         binding.viewPager.offscreenPageLimit=1
-
         // 启用 ViewPager2 的滑动
         binding.viewPager.isUserInputEnabled = true
 
@@ -171,14 +171,29 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
         parentFragmentManager.beginTransaction()
             .setCustomAnimations(
-                android.R.anim.slide_in_left,
-                android.R.anim.slide_out_right,
-                android.R.anim.slide_in_left,
-                android.R.anim.slide_out_right
+                R.anim.slide_in_right,    // 从右侧滑入
+                R.anim.slide_out_left,    // 向左侧滑出
+                R.anim.slide_in_left,     // 返回时从左侧滑入
+                R.anim.slide_out_right    // 返回时向右侧滑出
             )
             .replace(android.R.id.content, personalHomeFragment)
             .addToBackStack(null)
             .commit()
+
+        val listener = object : FragmentManager.OnBackStackChangedListener {
+            override fun onBackStackChanged() {
+                // 当返回栈为空时
+                if (parentFragmentManager.backStackEntryCount == 0) {
+                    // 恢复底部导航栏到"首页"
+                    binding.tabMainMenu.getTabAt(0)?.select()
+
+                    // 移除监听器（避免重复触发）
+                    parentFragmentManager.removeOnBackStackChangedListener(this)
+                }
+            }
+        }
+
+        parentFragmentManager.addOnBackStackChangedListener(listener)
     }
 
     override fun onDestroyView() {
