@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- 顶部导航栏（最上层） -->
+    <!-- 顶部导航栏 -->
     <RelativeLayout
         android:id="@+id/top_bar"
         android:layout_width="0dp"
@@ -107,7 +107,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 全局封面（elevation=2dp，在 ViewPager2 上层） -->
+    <!-- 全局封面 -->
     <ImageView
         android:id="@+id/iv_global_cover"
         android:layout_width="0dp"
@@ -121,7 +121,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- ✅ 下拉刷新容器（elevation=4dp，在封面上层，但低于顶部栏） -->
+    <!-- 下拉刷新容器 -->
     <LinearLayout
         android:id="@+id/refresh_container"
         android:layout_width="wrap_content"
@@ -153,7 +153,7 @@
             android:textSize="14sp"
             android:layout_marginStart="8dp"/>
 
-        <!-- 加载进度条（刷新时显示） -->
+        <!-- 加载进度条 -->
         <ProgressBar
             android:id="@+id/pb_refresh_loading"
             style="?android:attr/progressBarStyleSmall"

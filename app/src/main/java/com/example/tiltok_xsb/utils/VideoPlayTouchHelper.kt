@@ -13,9 +13,10 @@ class VideoPlayTouchHelper(
     private val onLoadMore: () -> Unit,             // 触发加载更多
     private val refreshIcon: android.widget.ImageView? = null,
 ) {
-
+    // 触摸起始位置
     private var startY = 0f
     private var startX = 0f
+
     private var isDragging = false
     private var currentDragDistance = 0f
     private var isPullingDown = false
@@ -55,7 +56,7 @@ class VideoPlayTouchHelper(
                         isDragging = true
                         isPullingDown = true
 
-                        // 计算拖拽距离（带阻尼）
+                        // 计算拖拽距离
                         currentDragDistance = calculateDragDistance(deltaY)
                         val progress = (currentDragDistance / threshold).coerceIn(0f, 1.5f)
 
@@ -122,7 +123,7 @@ class VideoPlayTouchHelper(
         return false
     }
 
-    // 计算拖拽距离（添加阻尼效果）
+    // 计算拖拽距离
     private fun calculateDragDistance(rawDistance: Float): Float {
         return if (rawDistance <= maxDragDistance) {
             rawDistance
@@ -131,7 +132,7 @@ class VideoPlayTouchHelper(
         }.coerceAtMost(maxDragDistance * 1.5f)
     }
 
-    // 刷新图标旋转动画（跟随手指）
+    // 刷新图标旋转动画
     private fun animateRefreshIcon(progress: Float) {
         refreshIcon?.let { icon ->
             icon.rotation = progress * 360f

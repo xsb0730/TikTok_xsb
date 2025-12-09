@@ -2,7 +2,6 @@ package com.example.tiltok_xsb.ui.adapter
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
-import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,8 +28,7 @@ import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
     private val viewModel: VideoPlayViewModel,
-    private val onCommentClick: ((VideoBean, Int) -> Unit)? = null,
-    private val onCoverUpdate: ((Int, String?) -> Unit)? = null
+    private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
     //当前正在播放的位置

@@ -107,8 +107,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             viewModel,
             onCommentClick = { video, position ->
                 showCommentDialog(video, position)
-            },
-            onCoverUpdate = null
+            }
         )
 
         binding.viewPager.adapter = videoPlayAdapter
@@ -227,6 +226,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         touchHelper = VideoPlayTouchHelper(
             viewPager = binding.viewPager,
             refreshIcon = binding.ivRefreshIcon,
+
+            //下拉进度更新
             onPullDown = { distance ->
                 // 下拉刷新动画
                 val progress = (distance / 200f).coerceIn(0f, 1f)
@@ -258,6 +259,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 }
             },
 
+            //触发刷新
             onRefresh = {
                 if (!isRefreshing) {
                     isRefreshing = true
@@ -272,8 +274,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 }
             },
 
+            //触发加载更多
             onLoadMore = {
-                // 触发加载更多
                 if (!isLoadingMore && !isRefreshing) {
                     isLoadingMore = true
                     viewModel.loadMoreVideos()
@@ -282,18 +284,23 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         )
     }
 
-    // 拦截触摸事件
-    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        // 先让 touchHelper 尝试处理
-        val handled = touchHelper?.onTouchEvent(ev) ?: false
+    // 显示评论弹窗
+    private fun showCommentDialog(video: VideoBean, position: Int) {
+        // 暂停当前视频
+        videoPlayAdapter?.pauseCurrentVideo()
 
-        // 如果 touchHelper 拦截了事件，返回 true
-        if (handled) {
-            return true
+        val commentDialog = CommentDialog(
+            context = this,
+            videoId = video.videoId,
+            viewModelStoreOwner = this,
+        )
+
+        // 弹窗关闭时恢复视频播放
+        commentDialog.setOnDismissListener {
+            videoPlayAdapter?.resumeCurrentVideo()
         }
 
-        // 否则交给父类处理（让 ViewPager2 正常工作）
-        return super.dispatchTouchEvent(ev)
+        commentDialog.show()
     }
 
     //观察事件
@@ -322,6 +329,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                             binding.tvRefreshHint.setTextColor(android.graphics.Color.WHITE)
                         }
                         .start()
+
                     // 视频区域同步回弹
                     binding.viewPager.animate()
                         .translationY(0f)
@@ -426,8 +434,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
                             // 重置加载状态，允许再次触发
                             touchHelper?.resetLoadMoreState()
-
-                            Toast.makeText(this, "加载了 ${newVideos.size} 条视频", Toast.LENGTH_SHORT).show()
                         } else {
 
                             Toast.makeText(this, "没有更多数据了", Toast.LENGTH_SHORT).show()
@@ -503,23 +509,18 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         videoPlayAdapter?.pauseCurrentVideo()
     }
 
-    // 显示评论弹窗
-    private fun showCommentDialog(video: VideoBean, position: Int) {
-        // 暂停当前视频
-        videoPlayAdapter?.pauseCurrentVideo()
+    // 拦截触摸事件
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // 先让 touchHelper 尝试处理
+        val handled = touchHelper?.onTouchEvent(ev) ?: false
 
-        val commentDialog = CommentDialog(
-            context = this,
-            videoId = video.videoId,
-            viewModelStoreOwner = this,
-        )
-
-        // 弹窗关闭时恢复视频播放
-        commentDialog.setOnDismissListener {
-            videoPlayAdapter?.resumeCurrentVideo()
+        // 如果 touchHelper 拦截了事件，返回 true
+        if (handled) {
+            return true
         }
 
-        commentDialog.show()
+        // 否则交给父类处理（让 ViewPager2 正常工作）
+        return super.dispatchTouchEvent(ev)
     }
 
     //释放
