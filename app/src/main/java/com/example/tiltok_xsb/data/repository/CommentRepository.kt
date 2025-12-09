@@ -100,11 +100,11 @@ class CommentRepository(context: Context) {
     }
 
     // 获取评论数量
-    suspend fun getCommentCount(videoId: Int): Int {
+    private suspend fun getCommentCount(videoId: Int): Int {
         return commentDao.getCommentCount(videoId)
     }
 
-    // 新增：批量获取多个视频的评论数
+    // 批量获取多个视频的评论数
     suspend fun getCommentCountsForVideos(videoIds: List<Int>): Map<Int, Int> {
         return try {
             val result = mutableMapOf<Int, Int>()

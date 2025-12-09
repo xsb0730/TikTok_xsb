@@ -1,4 +1,4 @@
-package com.example.tiltok_xsb.ui.view
+package com.example.tiltok_xsb.ui.fragment
 
 import android.app.Application
 import android.content.Context
@@ -28,8 +28,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 class CommentDialog(
     context: Context,
     private val videoId:Int,
-    private val viewModelStoreOwner: ViewModelStoreOwner,
-    private val onCommentCountChanged: ((Int) -> Unit)? = null
+    private val viewModelStoreOwner: ViewModelStoreOwner
 ) :BottomSheetDialog(context, R.style.BottomSheetDialogTheme), LifecycleOwner{
 
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -45,6 +44,7 @@ class CommentDialog(
         binding = DialogCommentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 从传入的 ViewModelStoreOwner 获取 ViewModel（与 Activity 共享）
         viewModel = ViewModelProvider(
             viewModelStoreOwner,
             ViewModelProvider.AndroidViewModelFactory.getInstance(
@@ -61,18 +61,6 @@ class CommentDialog(
 
         // 加载评论列表
         viewModel.loadComments(videoId)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        // 设置生命周期状态为 STARTED
-        lifecycleRegistry.currentState = Lifecycle.State.STARTED
-    }
-
-    override fun show() {
-        super.show()
-        // 设置生命周期状态为 RESUMED
-        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
     }
 
     //配置弹窗样式
@@ -110,18 +98,48 @@ class CommentDialog(
         }
     }
 
+    // 处理软键盘插入
+    private fun setupWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            // 获取系统栏和键盘的 insets
+            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+
+            // 使用最大值（键盘弹出时用键盘高度，否则用导航栏高度）
+            val bottomInset = maxOf(systemBarsInsets.bottom, imeInsets.bottom)
+
+            // 动态设置输入框底部内边距
+            binding.layoutInput.updatePadding(bottom = bottomInset)
+
+            // 键盘弹出时，自动滚动到底部
+            if (imeInsets.bottom > 0) {
+                binding.recyclerView.postDelayed({
+                    val itemCount = adapter?.itemCount ?: 0
+                    if (itemCount > 0) {
+                        binding.recyclerView.smoothScrollToPosition(itemCount - 1)
+                    }
+                }, 100)
+            }
+
+            WindowInsetsCompat.CONSUMED
+        }
+    }
+
     //设置评论列表
     private fun setupRecyclerView() {
+
         adapter = CommentAdapter(
+            // 点赞回调函数
             onLikeClick = { comment, position ->
                 viewModel.toggleCommentLike(comment, position)
             }
         )
 
         binding.recyclerView.apply {
+            // 使用固定大小的 RecyclerView
             layoutManager = LinearLayoutManager(context)
             adapter = this@CommentDialog.adapter
-            setHasFixedSize(true)  // RecyclerView 尺寸固定，优化性能
+            setHasFixedSize(true)
         }
     }
 
@@ -172,6 +190,7 @@ class CommentDialog(
 
     //监听数据变化
     private fun observeViewModel() {
+        // 评论列表
         viewModel.commentList.observe(this) { resource ->
             when (resource) {
                 is Resource.Loading -> {
@@ -180,11 +199,11 @@ class CommentDialog(
 
                 is Resource.Success -> {
                     resource.data?.let { comments ->
-
                         adapter?.submitList(comments)
-                        binding.tvTitle.text = context.getString(R.string.comment_count_format, comments.size)       // 更新标题
-                        onCommentCountChanged?.invoke(comments.size)
-
+                        binding.tvTitle.text = context.getString(
+                            R.string.comment_count_format,
+                            comments.size
+                        )
                     }
                 }
 
@@ -195,6 +214,7 @@ class CommentDialog(
             }
         }
 
+        // 发布结果
         viewModel.publishResult.observe(this) { resource ->
 
             when (resource) {
@@ -213,38 +233,11 @@ class CommentDialog(
             }
         }
 
+        //错误信息
         viewModel.errorMessage.observe(this) { message ->
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
-
-    // 处理软键盘插入
-    private fun setupWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
-            // 获取系统栏和键盘的 insets
-            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
-
-            // 使用最大值（键盘弹出时用键盘高度，否则用导航栏高度）
-            val bottomInset = maxOf(systemBarsInsets.bottom, imeInsets.bottom)
-
-            // 动态设置输入框底部内边距
-            binding.layoutInput.updatePadding(bottom = bottomInset)
-
-            // 键盘弹出时，自动滚动到底部
-            if (imeInsets.bottom > 0) {
-                binding.recyclerView.postDelayed({
-                    val itemCount = adapter?.itemCount ?: 0
-                    if (itemCount > 0) {
-                        binding.recyclerView.smoothScrollToPosition(itemCount - 1)
-                    }
-                }, 100)
-            }
-
-            WindowInsetsCompat.CONSUMED
-        }
-    }
-
 
     //隐藏软键盘
     private fun hideKeyboard() {
@@ -252,13 +245,23 @@ class CommentDialog(
         imm.hideSoftInputFromWindow(binding.etInput.windowToken, 0)
     }
 
-    //销毁时清理资源
+    // 设置生命周期状态为 STARTED
+    override fun onStart() {
+        super.onStart()
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
+    }
+
+    // 设置生命周期状态为 RESUMED
+    override fun show() {
+        super.show()
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+    }
+
+    //销毁时清理资源，设置生命周期状态为 DESTROYED
     override fun dismiss() {
         super.dismiss()
-
-        // 设置生命周期状态为 DESTROYED
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
-
         adapter = null
     }
+
 }

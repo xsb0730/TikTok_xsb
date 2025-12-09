@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -15,7 +16,8 @@ import com.example.tiltok_xsb.base.BaseBindingActivity
 import com.example.tiltok_xsb.databinding.ActivityVideoPlayBinding
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.adapter.VideoPlayAdapter
-import com.example.tiltok_xsb.ui.view.CommentDialog
+import com.example.tiltok_xsb.ui.fragment.CommentDialog
+import com.example.tiltok_xsb.ui.viewmodel.CommentViewModel
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 import com.example.tiltok_xsb.utils.FullScreenUtil
 import com.example.tiltok_xsb.utils.Resource
@@ -23,6 +25,12 @@ import com.example.tiltok_xsb.utils.VideoPlayTouchHelper
 
 class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityVideoPlayBinding.inflate(it)}) {
     private val viewModel: VideoPlayViewModel by viewModels()
+    private val commentViewModel: CommentViewModel by lazy {
+        ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+        )[CommentViewModel::class.java]
+    }
     private var videoPlayAdapter:VideoPlayAdapter?=null
     private var currentPosition:Int=0
     private val videoList = mutableListOf<VideoBean>()
@@ -47,6 +55,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 putParcelableArrayListExtra(KEY_VIDEO_LIST, videoList)
                 putExtra(KEY_POSITION, position)
             }
+
+            // 带动画启动
             context.startActivity(intent, options)
         }
     }
@@ -59,7 +69,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         //获取传递的数据
         val receivedList = intent.getParcelableArrayListExtraCompat<VideoBean>(KEY_VIDEO_LIST)
         currentPosition=intent.getIntExtra(KEY_POSITION,0)
-
         receivedList?.let {
             videoList.clear()
             videoList.addAll(it)
@@ -76,13 +85,14 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         setupClickListeners()       // 设置点击事件
         setupTouchHelper()          // 设置触摸手势（下拉刷新/上拉加载）
         observeViewModel()          // 观察数据变化
+        observeCommentViewModel()   // 观察评论数变化
 
-        // 初始化封面
+        // 初始化封面，转场动画的目标 View
         if (isFirstEnter) {
             loadCoverForPosition(currentPosition)
         }
 
-        // 延迟转场动画，等待 View 准备好
+        // 延迟转场动画，等待目标 View 准备好
         supportPostponeEnterTransition()
     }
 
@@ -106,21 +116,28 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         binding.viewPager.adapter = videoPlayAdapter
         binding.viewPager.orientation = ViewPager2.ORIENTATION_VERTICAL
         binding.viewPager.offscreenPageLimit = 1
+
+        //定位到点击的视频位置
         binding.viewPager.setCurrentItem(currentPosition, false)
 
+        // 监听布局完成事件
         val recyclerView = binding.viewPager.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
         recyclerView?.viewTreeObserver?.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
+                // 移除监听器
                 recyclerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
+                // 延迟执行，确保布局稳定
                 recyclerView.post {
+                    // 通知适配器开始准备视频
                     videoPlayAdapter?.onPageSelected(currentPosition)
-
+                    // 启动转场动画
                     supportStartPostponedEnterTransition()
                 }
             }
         })
 
+        // 监听页面切换
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
@@ -134,10 +151,11 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     private fun loadCoverForPosition(position: Int) {
         val video = videoList.getOrNull(position) ?: return
 
-        // 显示封面
+        // 显示全局封面层
         binding.ivGlobalCover.visibility = View.VISIBLE
         binding.ivGlobalCover.alpha = 1f
 
+        // 加载封面图片
         if (video.coverRes != 0) {
             Glide.with(this)
                 .load(video.coverRes)
@@ -155,8 +173,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
     // 隐藏封面
     private fun hideCover() {
-        android.util.Log.d("VideoPlayActivity", "隐藏封面（转场动画结束）")
-
         binding.ivGlobalCover.animate()
             .alpha(0f)
             .setDuration(300)
@@ -167,15 +183,14 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             .start()
     }
 
-    //设置点击监听
+    //设置返回按钮点击监听
     private fun setupClickListeners(){
-        //返回按钮
         binding.ivBack.setOnClickListener {
             finish()
         }
     }
 
-    // 设置触摸监听
+    // 设置触摸监听（上下滑动）
     private fun setupTouchHelper() {
         touchHelper = VideoPlayTouchHelper(
             viewPager = binding.viewPager,
@@ -425,6 +440,21 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         }
     }
 
+    // 观察评论数变化
+    private fun observeCommentViewModel() {
+        commentViewModel.commentCountUpdate.observe(this) { (videoId, newCount) ->
+            // 查找对应的视频位置
+            val position = videoList.indexOfFirst { it.videoId == videoId }
+
+            if (position != -1) {
+                // 更新 VideoBean 中的评论数
+                videoList[position].commentCount = newCount
+                // 更新 Adapter 中的显示
+                videoPlayAdapter?.updateCommentCount(position, newCount)
+            }
+        }
+    }
+
     //恢复
     override fun onResume() {
         super.onResume()
@@ -450,17 +480,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             context = this,
             videoId = video.videoId,
             viewModelStoreOwner = this,
-
-            // 传入评论数变化的回调
-            onCommentCountChanged = { newCount ->
-                // 更新 VideoBean 中的评论数
-                videoList.getOrNull(position)?.let {
-                    it.commentCount = newCount
-                }
-
-                // 更新 Adapter 中的显示
-                videoPlayAdapter?.updateCommentCount(position, newCount)
-            }
         )
 
         // 弹窗关闭时恢复视频播放

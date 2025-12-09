@@ -34,7 +34,7 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
     }
 
-    //设置顶部Tab和ViewPager2
+    //设置顶部Tab和ViewPager2实现左右滑动
     private fun setFragment(){
 
         sameCityFragment=SameCityFragment()
@@ -72,7 +72,6 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
             binding.viewPager.setCurrentItem(1, false)
             videoPlayStateLiveData.value = true
         }
-
 
         //监听页面切换
         binding.viewPager.registerOnPageChangeCallback(object :ViewPager2.OnPageChangeCallback(){

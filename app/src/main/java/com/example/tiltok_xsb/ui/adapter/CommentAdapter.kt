@@ -7,7 +7,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.example.tiltok_xsb.R
-import android.util.Log
 import com.example.tiltok_xsb.data.model.CommentBean
 import com.example.tiltok_xsb.databinding.ItemCommentBinding
 
@@ -19,8 +18,6 @@ class CommentAdapter(
 
     // 创建评论 Item 的视图
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentViewHolder {
-        Log.d("CommentAdapter", "onCreateViewHolder 调用")
-
         val binding = ItemCommentBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
@@ -31,32 +28,30 @@ class CommentAdapter(
 
     //将评论数据绑定到 ViewHolder
     override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
-        Log.d("CommentAdapter", "onBindViewHolder 调用，position: $position")
         holder.bind(commentList[position], position)
     }
 
+    //返回评论列表的大小
     override fun getItemCount(): Int {
-        Log.d("CommentAdapter", "getItemCount: ${commentList.size}")
         return commentList.size
     }
 
+    //更新评论列表
     @SuppressLint("NotifyDataSetChanged")
     fun submitList(newList: List<CommentBean>?) {
-        Log.d("CommentAdapter", "submitList 调用，数量: ${newList?.size ?: 0}")
 
         commentList.clear()
         if (newList != null) {
             commentList.addAll(newList)
         }
 
-        Log.d("CommentAdapter", "当前列表数量: ${commentList.size}")
-
+        // 通知 RecyclerView 数据已更新
         notifyDataSetChanged()
 
-        Log.d("CommentAdapter", "notifyDataSetChanged 已调用")
     }
 
 
+    //缓存视图控件、绑定评论数据
     inner class CommentViewHolder(val binding: ItemCommentBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
@@ -95,7 +90,6 @@ class CommentAdapter(
                         onLikeClick(comment, currentPosition)
                     }
                 }
-                Log.d("CommentAdapter", "绑定完成 [$position]")
             }
         }
 

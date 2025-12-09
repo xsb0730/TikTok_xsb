@@ -75,6 +75,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         position: Int,
         itemBinding: ItemGridVideoBinding
     ) {
+        // 获取完整视频列表
         val videoList = viewModel.getCurrentVideoList()
 
         // 创建共享元素配对
@@ -92,9 +93,9 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         // 启动 Activity
         VideoPlayActivity.startWithTransition(
             requireContext(),
-            videoList,
-            position,
-            options.toBundle()
+            videoList,           // 完整视频列表
+            position,            // 当前点击的视频位置
+            options.toBundle()   // 将动画配置传递给目标 Activity
         )
     }
 

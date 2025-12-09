@@ -32,7 +32,7 @@ class MainActivity:BaseBindingActivity<ActivityMainBinding>({ActivityMainBinding
         setupBackPressed()
     }
 
-     //初始化数据
+    //初始化数据
     private fun initializeData() {
         try {
             DataCreate()

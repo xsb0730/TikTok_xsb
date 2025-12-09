@@ -59,7 +59,6 @@ class VideoPlayAdapter(
             isPlayerReady = false           // 重置准备状态
 
             with(binding) {
-
                 //加载头像
                 loadAvatar(video)
 
@@ -91,7 +90,6 @@ class VideoPlayAdapter(
             //保存ViewHolder
             videoHolders[position] = this
         }
-
 
         //加载头像
         private fun loadAvatar(video: VideoBean) {
@@ -213,7 +211,7 @@ class VideoPlayAdapter(
                         // 绑定到 PlayerView
                         binding.playerView.player = this
 
-                        // 设置播放监听
+                        // 设置播放监听，当视频准备就绪时，触发回调
                         addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 when (playbackState) {
@@ -260,7 +258,6 @@ class VideoPlayAdapter(
 
                             //播放状态变化
                             override fun onIsPlayingChanged(isPlaying: Boolean) {
-
                                 if (isPlaying) {
                                     startRecordAnimation()
                                     hidePauseIcon()
@@ -296,12 +293,6 @@ class VideoPlayAdapter(
                 Toast.makeText(binding.root.context, "播放器初始化失败", Toast.LENGTH_SHORT).show()
             }
         }
-
-
-
-
-
-
 
         //切换播放/暂停
         private fun togglePlayPause() {
@@ -421,10 +412,6 @@ class VideoPlayAdapter(
             binding.rlRecord.rotation = 0f
         }
 
-
-
-
-
         //更新点赞状态，并同步UI与动画
         fun updateLikeState(isLiked: Boolean) {
             currentVideo.isLiked = isLiked
@@ -458,8 +445,6 @@ class VideoPlayAdapter(
             }
         }
     }
-
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
         val binding = ItemVideoPlayBinding.inflate(

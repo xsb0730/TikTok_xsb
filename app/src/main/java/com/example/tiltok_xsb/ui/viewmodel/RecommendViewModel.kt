@@ -52,7 +52,9 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
                 // 同步评论数
                 syncCommentCounts(videos)
 
+                // 累加到缓存
                 allVideos.addAll(videos)
+
                 _videoList.value = Resource.Success(allVideos.toList())
                 currentPage++
             } else {
