@@ -16,6 +16,7 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
     private val videoRepository = VideoRepository()
     private val commentRepository = CommentRepository(application)  // 添加评论仓库
 
+    //刷新结果
     private val _videoList = MutableLiveData<Resource<List<VideoBean>>>()
     val videoList: LiveData<Resource<List<VideoBean>>> = _videoList
 
@@ -31,8 +32,10 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-    private var currentPage = 1
-    private val pageSize = 20
+    private var currentPage = 1     // 当前页码
+    private val pageSize = 20       // 每页数量
+
+    //视频缓存
     private val allVideos = mutableListOf<VideoBean>()
 
     // 加载推荐视频（首次加载或刷新）
@@ -56,6 +59,7 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
                 allVideos.addAll(videos)
 
                 _videoList.value = Resource.Success(allVideos.toList())
+
                 currentPage++
             } else {
                 _videoList.value = Resource.Error(result.exceptionOrNull()?.message ?: "加载失败")
@@ -99,7 +103,7 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
             }
 
         } catch (e: Exception) {
-            android.util.Log.e("RecommendViewModel", "❌ 同步评论数失败: ${e.message}")
+            android.util.Log.e("RecommendViewModel", "同步评论数失败: ${e.message}")
         }
     }
 

@@ -16,12 +16,15 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
     private val videoRepository = VideoRepository()
     private val commentRepository = CommentRepository(application)  // 添加评论仓库
 
+    //点赞结果
     private val _likeResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isLiked>
     val likeResult: LiveData<Pair<Int, Boolean>> = _likeResult
 
+    //收藏结果
     private val _collectResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isCollected>
     val collectResult: LiveData<Pair<Int, Boolean>> = _collectResult
 
+    //关注结果
     private val _followResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isFollowed>
     val followResult: LiveData<Pair<Int, Boolean>> = _followResult
 

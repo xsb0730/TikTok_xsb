@@ -45,20 +45,21 @@ class LikeAnimationView @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     private fun initGestureDetector() {
         gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-            // 双击事件
+            // 双击事件（300ms 内点击两次）
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 addLikeView(e)
                 onLikeListener?.onLike()
                 return true
             }
 
-            // 单击事件
+            // 单击事件（确认不是双击后触发）
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
                 onPlayPauseListener?.onPlayOrPause()
                 return true
             }
         })
 
+        //拦截触摸事件，交给 GestureDetector 处理
         setOnTouchListener { _, event ->
             gestureDetector?.onTouchEvent(event)
             true

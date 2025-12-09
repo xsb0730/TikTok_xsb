@@ -99,10 +99,11 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
         )
     }
 
-
     //下拉刷新
     private fun setRefreshEvent(){
+        // 设置进度条颜色
         binding.refreshLayout.setColorSchemeResources(R.color.color_link)
+        // 设置下拉刷新监听器
         binding.refreshLayout.setOnRefreshListener {
             isFirstLoad = false
             hasMoreData = true
@@ -124,21 +125,24 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                     return
                 }
 
-                // 距离上次加载不足 1 秒则不触发
+                // 距离上次加载不足 1 秒则不触发(防抖）
                 val currentTime = System.currentTimeMillis()
                 if (currentTime - lastLoadTime < loadInterval) {
                     return
                 }
 
+                // 获取布局管理器
                 val layoutManager=recyclerView.layoutManager as StaggeredGridLayoutManager
 
                 //最后一个可见项的位置
                 val lastVisibleItems=IntArray(2)
                 layoutManager.findLastVisibleItemPositions(lastVisibleItems)
                 val lastVisibleItem=lastVisibleItems.maxOrNull()?:0
+
+                // 获取总项数
                 val totalItemCount=layoutManager.itemCount
 
-                //滚动到倒数第三行加载更多
+                //滚动到倒数第4个加载更多
                 if(lastVisibleItem>=totalItemCount-4&&totalItemCount>0){
                     isLoading = true
                     lastLoadTime = currentTime
@@ -179,7 +183,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
             }
         }
 
-
         // 加载更多结果
         viewModel.loadMoreResult.observe(viewLifecycleOwner) { resource ->
             when (resource) {
@@ -196,6 +199,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                             // 记录当前滚动位置
                             val layoutManager = binding.recyclerView.layoutManager as StaggeredGridLayoutManager
 
+                            // 记录第一个可见项的位置和偏移量
                             val firstVisibleItems = IntArray(2)
                             layoutManager.findFirstVisibleItemPositions(firstVisibleItems)
                             val firstVisiblePosition = firstVisibleItems.minOrNull() ?: 0
@@ -217,7 +221,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                         isLoading = false
                     }, 300)
                 }
-
                 is Resource.Error -> {
                     isLoading = false  //  加载失败，恢复状态
                     Toast.makeText(context, resource.message ?: "加载失败", Toast.LENGTH_SHORT).show()

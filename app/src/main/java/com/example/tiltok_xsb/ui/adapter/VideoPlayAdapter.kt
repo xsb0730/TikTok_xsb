@@ -2,6 +2,7 @@ package com.example.tiltok_xsb.ui.adapter
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -379,17 +380,17 @@ class VideoPlayAdapter(
         private fun startRecordAnimation() {
             if (recordAnimator == null) {
                 recordAnimator = ObjectAnimator.ofFloat(
-                    binding.rlRecord,
-                    "rotation",
-                    0f,
-                    360f
+                    binding.rlRecord,                    // 目标 View：唱片容器
+                    "rotation",             // 动画属性：旋转角度
+                    0f,                          // 起始角度：0°
+                    360f                                 // 结束角度：360°（完整一圈）
                 ).apply {
-                    duration = 10000
-                    repeatCount = ObjectAnimator.INFINITE
-                    interpolator = LinearInterpolator()
+                    duration = 10000                       // 旋转一圈耗时：10 秒
+                    repeatCount = ObjectAnimator.INFINITE  // 重复次数：无限循环
+                    interpolator = LinearInterpolator()    // 插值器：匀速旋转
                 }
             }
-            recordAnimator?.start()
+            recordAnimator?.resume()
         }
 
         //暂停唱片旋转动画的方法
