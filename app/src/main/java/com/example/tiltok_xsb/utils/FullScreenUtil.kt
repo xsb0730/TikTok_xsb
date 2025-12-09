@@ -7,6 +7,7 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 
+// 全屏播放
 object FullScreenUtil{
 
     //设置全屏

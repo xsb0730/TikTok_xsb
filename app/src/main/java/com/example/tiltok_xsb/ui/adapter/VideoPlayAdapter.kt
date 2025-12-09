@@ -1,6 +1,7 @@
 package com.example.tiltok_xsb.ui.adapter
 
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -49,6 +50,7 @@ class VideoPlayAdapter(
         private var shouldPlay = false
 
         //将视频数据绑定到ViewHolder的视图上
+        @SuppressLint("SetTextI18n")
         fun bind(video: VideoBean, position: Int) {
 
             currentVideo = video
@@ -73,7 +75,9 @@ class VideoPlayAdapter(
                 tvNickname.text = root.context.getString(R.string.user_nickname_format, nickname)
                 tvTitle.text = video.content ?: ""
 
-                updateUIState(video)                        //设置统计数据
+                tvMarquee.text = "@$nickname 创作的原声 - $nickname"       //动态设置走马灯文本
+
+                updateUIState(video)                                     //设置统计数据
 
                 //设置关注状态
                 ivFollow.visibility =

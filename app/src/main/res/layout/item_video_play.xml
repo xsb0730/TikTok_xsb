@@ -228,9 +228,10 @@
 
         <!-- 音乐 -->
         <com.example.tiltok_xsb.ui.view.MarqueeTextView
+            android:id="@+id/tv_marquee"
             android:layout_width="180dp"
             android:layout_height="wrap_content"
-            android:text=" @用户名 创作的原声 - 用户名"
+            android:text=""
             android:textColor="@color/white"
             android:textSize="14sp"
             android:ellipsize="marquee"

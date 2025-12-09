@@ -10,6 +10,7 @@ import com.example.tiltok_xsb.data.model.UserInfo
 import com.example.tiltok_xsb.data.repository.UserRepository
 import com.example.tiltok_xsb.utils.Resource
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class PersonalHomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -76,8 +77,8 @@ class PersonalHomeViewModel(application: Application) : AndroidViewModel(applica
      //格式化数字
     fun formatCount(count: Int): String {
         return when {
-            count >= 10000 -> String.format("%.1fw", count / 10000.0)
-            count >= 1000 -> String.format("%.1fk", count / 1000.0)
+            count >= 10000 -> String.format(Locale.US,"%.1fw", count / 10000.0)
+            count >= 1000 -> String.format(Locale.US,"%.1fk", count / 1000.0)
             else -> count.toString()
         }
     }

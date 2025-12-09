@@ -86,25 +86,6 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
         }
     }
 
-    //点赞/取消点赞
-    fun toggleLike(video:VideoBean,position: Int){
-        viewModelScope.launch {
-            val result = videoRepository.toggleLike(video)
-            if (result.isSuccess) {
-
-                video.isLiked = !video.isLiked
-                if (video.isLiked) {
-                    video.likeCount++
-                } else {
-                    video.likeCount--
-                }
-                _likeResult.value = Pair(position, video.isLiked)
-            } else {
-                _errorMessage.value = "操作失败"
-            }
-        }
-    }
-
     // 同步视频列表的评论数
     private suspend fun syncCommentCounts(videos: List<VideoBean>) {
         try {
@@ -115,10 +96,6 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
                 video.commentCount = commentCounts[video.videoId] ?: 0
             }
 
-            android.util.Log.d(
-                "RecommendViewModel",
-                "✅ 同步评论数完成: ${videos.map { "${it.videoId}=${it.commentCount}" }}"
-            )
         } catch (e: Exception) {
             android.util.Log.e("RecommendViewModel", "❌ 同步评论数失败: ${e.message}")
         }

@@ -56,24 +56,13 @@ class SameCityFragment : Fragment() {
 
         adapter = SameCityVideoAdapter(
             context = requireContext(),
-            onItemClick = { video, _ ->
-                Toast.makeText(context, "点击视频: ${video.content}", Toast.LENGTH_SHORT).show()
+            onItemClick = { _, _ ->
             },
-            onAvatarClick = { video, _ ->
-                Toast.makeText(
-                    context,
-                    "进入 ${video.userBean?.nickName} 的主页",
-                    Toast.LENGTH_SHORT
-                ).show()
+            onAvatarClick = { _, _ ->
             },
             onLikeClick = { video, position ->
                 video.isLiked = !video.isLiked
                 adapter?.updateLikeStatus(position, video.isLiked)
-                Toast.makeText(
-                    context,
-                    if (video.isLiked) "已点赞" else "取消点赞",
-                    Toast.LENGTH_SHORT
-                ).show()
             }
         )
 
@@ -126,7 +115,6 @@ class SameCityFragment : Fragment() {
 
             binding.refreshLayout.isRefreshing = false
             isLoading = false
-            Toast.makeText(context, "刷新成功，加载了 ${mockData.size} 条数据", Toast.LENGTH_SHORT).show()
         }, 500)
     }
 
@@ -143,7 +131,6 @@ class SameCityFragment : Fragment() {
 
             adapter?.appendList(mockData)
             isLoading = false
-            Toast.makeText(context, "加载了 ${mockData.size} 条数据", Toast.LENGTH_SHORT).show()
         }, 500)
     }
 

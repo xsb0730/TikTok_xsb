@@ -208,7 +208,6 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                             binding.recyclerView.post {
                                 layoutManager.scrollToPositionWithOffset(firstVisiblePosition, topOffset)
                             }
-                            Toast.makeText(context, "加载了 ${newVideos.size} 条数据", Toast.LENGTH_SHORT).show()
                         }
                     }
 

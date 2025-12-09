@@ -70,7 +70,7 @@ class SameCityVideoAdapter(
 
     override fun getItemCount(): Int = videoList.size
 
-    // 加载视频封面（参考 GridVideoAdapter）
+    // 加载视频封面
     private fun loadVideoCover(video: VideoBean, holder: ViewHolder) {
         if (video.coverRes != 0) {
             // 有封面图，直接加载
@@ -96,7 +96,7 @@ class SameCityVideoAdapter(
         }
     }
 
-    // 加载作者头像（参考 GridVideoAdapter，修复 avatar 错误）
+    // 加载作者头像
     private fun loadAuthorAvatar(video: VideoBean, holder: ViewHolder) {
         val headId = video.userBean?.headId ?: 0
 
@@ -118,7 +118,7 @@ class SameCityVideoAdapter(
         }
     }
 
-    // 格式化点赞数（参考 GridVideoAdapter）
+    // 格式化点赞数
     private fun formatLikeCount(count: Int): String {
         return when {
             count < 1000 -> count.toString()

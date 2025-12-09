@@ -74,7 +74,7 @@ class VideoPlayTouchHelper(
 
                     if (itemCount > 0 && currentPosition == itemCount - 1 && deltaY < 0) {
                         isPullingUp = true
-                        // ❌ 不拦截事件，让 ViewPager2 正常滑动
+                        // 不拦截事件，让 ViewPager2 正常滑动
                         // return false 表示不拦截
                     }
                 }
