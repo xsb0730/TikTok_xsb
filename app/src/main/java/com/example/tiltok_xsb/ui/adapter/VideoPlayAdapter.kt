@@ -248,14 +248,6 @@ class VideoPlayAdapter(
                                 }
                             }
 
-                            // 渲染第一帧时通知 Activity 隐藏封面
-                            override fun onRenderedFirstFrame() {
-                                if (shouldPlay) {
-                                    // 通知 Activity 隐藏封面（如果是首次进入）
-                                    onCoverUpdate?.invoke(currentPosition.toInt(), null)
-                                }
-                            }
-
                             //播放状态变化
                             override fun onIsPlayingChanged(isPlaying: Boolean) {
                                 if (isPlaying) {
@@ -487,12 +479,6 @@ class VideoPlayAdapter(
     }
 
     fun onPageSelected(position: Int) {
-
-        // 通知 Activity 显示新封面
-        val video = videoList.getOrNull(position)
-        val coverRes = video?.coverRes?.let { if (it != 0) it.toString() else video.videoRes }
-        onCoverUpdate?.invoke(position, coverRes)
-
         // 暂停之前的视频
         if (currentPlayingPosition != -1 && currentPlayingPosition != position) {
             videoHolders[currentPlayingPosition]?.pause()

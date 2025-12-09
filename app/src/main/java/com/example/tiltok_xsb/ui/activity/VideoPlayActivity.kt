@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
@@ -87,13 +88,16 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         observeViewModel()          // 观察数据变化
         observeCommentViewModel()   // 观察评论数变化
 
+        // 延迟启动转场动画，等待目标 View 准备好
+        supportPostponeEnterTransition()
+
         // 初始化封面，转场动画的目标 View
         if (isFirstEnter) {
             loadCoverForPosition(currentPosition)
         }
 
-        // 延迟转场动画，等待目标 View 准备好
-        supportPostponeEnterTransition()
+        // 监听转场动画结束
+        setupTransitionListener()
     }
 
     //设置页面
@@ -104,13 +108,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             onCommentClick = { video, position ->
                 showCommentDialog(video, position)
             },
-            onCoverUpdate = { _, coverRes ->
-                // 只在首次进入时处理封面（转场动画）
-                if (isFirstEnter && coverRes == null) {
-                    hideCover()            //隐藏封面
-                    isFirstEnter = false   // 标记已经不是首次进入
-                }
-            }
+            onCoverUpdate = null
         )
 
         binding.viewPager.adapter = videoPlayAdapter
@@ -129,8 +127,9 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
                 // 延迟执行，确保布局稳定
                 recyclerView.post {
-                    // 通知适配器开始准备视频
+                    // 通知适配器提前开始准备视频
                     videoPlayAdapter?.onPageSelected(currentPosition)
+
                     // 启动转场动画
                     supportStartPostponedEnterTransition()
                 }
@@ -155,6 +154,8 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         binding.ivGlobalCover.visibility = View.VISIBLE
         binding.ivGlobalCover.alpha = 1f
 
+        ViewCompat.setTransitionName(binding.ivGlobalCover, "video_cover_$position")
+
         // 加载封面图片
         if (video.coverRes != 0) {
             Glide.with(this)
@@ -169,6 +170,37 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 .error(R.drawable.default_error)
                 .into(binding.ivGlobalCover)
         }
+    }
+
+    //转场动画监听
+    private fun setupTransitionListener() {
+        // 监听共享元素转场动画结束
+        window.sharedElementEnterTransition?.addListener(object : android.transition.Transition.TransitionListener {
+            override fun onTransitionStart(transition: android.transition.Transition?) {
+                android.util.Log.d("VideoPlayActivity", "✅ 转场动画开始")
+            }
+
+            //转场动画结束
+            override fun onTransitionEnd(transition: android.transition.Transition?) {
+                // 转场动画结束后隐藏封面
+                if (isFirstEnter) {
+                    hideCover()
+                    isFirstEnter = false
+                }
+            }
+
+            //转场动画取消
+            override fun onTransitionCancel(transition: android.transition.Transition?) {
+                // 动画取消也要隐藏封面
+                if (isFirstEnter) {
+                    hideCover()
+                    isFirstEnter = false
+                }
+            }
+
+            override fun onTransitionPause(transition: android.transition.Transition?) {}
+            override fun onTransitionResume(transition: android.transition.Transition?) {}
+        })
     }
 
     // 隐藏封面
@@ -190,7 +222,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         }
     }
 
-    // 设置触摸监听（上下滑动）
+    //设置触摸监听（上下滑动）
     private fun setupTouchHelper() {
         touchHelper = VideoPlayTouchHelper(
             viewPager = binding.viewPager,
