@@ -106,18 +106,15 @@ class CommentRepository(context: Context) {
 
     // 批量获取多个视频的评论数
     suspend fun getCommentCountsForVideos(videoIds: List<Int>): Map<Int, Int> {
-        return try {
-            val result = mutableMapOf<Int, Int>()
+        val result = mutableMapOf<Int, Int>()
 
-            videoIds.forEach { videoId ->
-                val count = getCommentCount(videoId)
-                result[videoId] = count
-            }
-
-            result
-        } catch (e: Exception) {
-            emptyMap()
+        videoIds.forEach { videoId ->
+            val count = getCommentCount(videoId)
+            result[videoId] = count
         }
+
+        return result
+
     }
 
 
@@ -206,12 +203,33 @@ class CommentRepository(context: Context) {
             "太棒了",
             "好喜欢这个视频",
             "每天都来看一遍",
-            "转发给朋友了"
+            "转发给朋友了",
+            "好看爱看",
+            "真是个天才！",
+            "这个视频让我笑到肚子痛",
+            "绝对是精品，值得一看！",
+            "每次看到都想点赞！",
+            "太有创意了！",
+            "看一次就中毒了！",
+            "超喜欢这个风格！",
+            "这是什么神仙操作？",
+            "对这种内容太上头了！",
+            "来看看新番，果然不错！",
+            "这背景音乐真好听！",
+            "感觉被治愈了，感谢分享！",
+            "这位小伙伴太有才了！",
+            "忍不住想分享给更多人！",
+            "看完真是心情大好！",
+            "这画面也太美了吧！",
+            "哪儿找的这么有趣的内容！",
+            "又被圈粉了，爱了爱了！",
+            "这一段好有意思！",
+            "如果有无限循环就好了！"
         )
 
         // 根据 videoId 生成不同数量和内容的评论
         val random = java.util.Random(videoId.toLong())  // 使用 videoId 作为随机种子，确保相同视频总是生成相同评论
-        val commentCount = random.nextInt(8) + 3  // 每个视频 3-10 条评论
+        val commentCount = random.nextInt(100) + 3  // 每个视频 3条以上评论
 
         return (1..commentCount).map { index ->
             val user = userPool[random.nextInt(userPool.size)]
