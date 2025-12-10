@@ -388,7 +388,7 @@ class VideoPlayAdapter(
                     interpolator = LinearInterpolator()    // 插值器：匀速旋转
                 }
             }
-            recordAnimator?.resume()
+            recordAnimator?.start()
         }
 
         //暂停唱片旋转动画的方法
