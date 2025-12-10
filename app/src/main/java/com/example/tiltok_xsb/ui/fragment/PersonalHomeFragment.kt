@@ -18,7 +18,7 @@ import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.databinding.FragmentPersonalHomeBinding
 import com.example.tiltok_xsb.ui.adapter.PersonalHomePagerAdapter
-import com.example.tiltok_xsb.ui.view.AvatarChooseDialog
+import com.example.tiltok_xsb.utils.AvatarChooseDialog
 import com.example.tiltok_xsb.ui.viewmodel.PersonalHomeViewModel
 import com.example.tiltok_xsb.utils.ImageUtils
 import com.example.tiltok_xsb.utils.Resource

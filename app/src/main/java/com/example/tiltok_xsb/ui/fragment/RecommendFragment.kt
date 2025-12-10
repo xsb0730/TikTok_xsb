@@ -18,8 +18,8 @@ import com.example.tiltok_xsb.ui.viewmodel.RecommendViewModel
 import com.example.tiltok_xsb.utils.Resource
 
 class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({FragmentRecommendBinding.inflate(it)}), IScrollToTop {
-
-    private val viewModel:RecommendViewModel by viewModels()            //by viewModels()确保屏幕旋转时数据不丢失，生命周期自动管理
+    //懒加载创建和获取 ViewModel 实例
+    private val viewModel:RecommendViewModel by viewModels()
     //双列列表适配器
     private var adapter:GridVideoAdapter? = null
     //是否正在加载
@@ -258,15 +258,7 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
             return
         }
 
-        // 使用 try-catch 防止崩溃
-        try {
-            binding.recyclerView.smoothScrollToPosition(0)
-        } catch (e: IllegalArgumentException) {
-            // binding 已被销毁，忽略
-            e.printStackTrace()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        binding.recyclerView.smoothScrollToPosition(0)
     }
 
     override fun onDestroyView() {

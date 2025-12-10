@@ -7,10 +7,10 @@ import androidx.lifecycle.Lifecycle
 
 
 class CommPagerAdapter(
-    fragmentManager: FragmentManager,
-    lifecycle: Lifecycle,
-    private val items: ArrayList<out Fragment>,
-    private val titles: Array<String>
+    fragmentManager: FragmentManager,                // Fragment 管理器
+    lifecycle: Lifecycle,                            // 生命周期
+    private val items: ArrayList<out Fragment>,      // 页面列表
+    private val titles: Array<String>                // 标题列表
 ) : FragmentStateAdapter(fragmentManager, lifecycle) {
 
     override fun getItemCount(): Int {

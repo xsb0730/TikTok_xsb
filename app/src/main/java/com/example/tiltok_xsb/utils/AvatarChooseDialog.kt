@@ -1,4 +1,4 @@
-package com.example.tiltok_xsb.ui.view
+package com.example.tiltok_xsb.utils
 
 import android.os.Bundle
 import android.view.LayoutInflater

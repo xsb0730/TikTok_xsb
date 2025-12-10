@@ -1,24 +1,19 @@
 package com.example.tiltok_xsb.ui.fragment
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.tiltok_xsb.R
+import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.databinding.FragmentSameCityBinding
 import com.example.tiltok_xsb.ui.adapter.SameCityVideoAdapter
 import com.example.tiltok_xsb.utils.DataCreate
 import kotlin.random.Random
 
-class SameCityFragment : Fragment() {
-
-    private var _binding: FragmentSameCityBinding? = null
-    private val binding get() = _binding!!
+class SameCityFragment : BaseBindingFragment<FragmentSameCityBinding>({ FragmentSameCityBinding.inflate(it)}), IScrollToTop {
 
     private var adapter: SameCityVideoAdapter? = null
     private var isLoading = false
@@ -28,15 +23,6 @@ class SameCityFragment : Fragment() {
 
     companion object {
         private const val PAGE_SIZE = 20
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentSameCityBinding.inflate(inflater, container, false)
-        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -176,7 +162,15 @@ class SameCityFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
         adapter = null
+    }
+
+    //滚动到顶部
+    override fun scrollToTop() {
+        if (!isAdded || isDetached) {
+            return
+        }
+
+        binding.recyclerView.smoothScrollToPosition(0)
     }
 }

@@ -5,8 +5,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.MutableLiveData
-import androidx.viewpager2.widget.ViewPager2
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.base.CommPagerAdapter
@@ -16,8 +14,6 @@ import kotlin.collections.ArrayList
 import com.google.android.material.tabs.TabLayout
 
 class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBinding.inflate(it)}) {
-    val videoPlayStateLiveData = MutableLiveData<Boolean>()
-
     private var sameCityFragment:SameCityFragment? = null
     private var recommendFragment:RecommendFragment? = null
 
@@ -52,11 +48,6 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
             arrayOf("同城","推荐")
         )
         binding.viewPager.adapter=pagerAdapter
-        //预加载所有页面
-        binding.viewPager.offscreenPageLimit=1
-        // 启用 ViewPager2 的滑动
-        binding.viewPager.isUserInputEnabled = true
-
 
         //关联TabLayout与ViewPager2
         tabLayoutMediator= TabLayoutMediator(
@@ -65,33 +56,14 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         ){tab,position->
             tab.text=pagerAdapter?.getPageTitle(position)
         }
+
+        //显示 Tab 标题
         tabLayoutMediator?.attach()
 
         // 设置默认选中推荐页
         binding.viewPager.post {
             binding.viewPager.setCurrentItem(1, false)
-            videoPlayStateLiveData.value = true
         }
-
-        //监听页面切换
-        binding.viewPager.registerOnPageChangeCallback(object :ViewPager2.OnPageChangeCallback(){
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-
-                curPage=position
-
-                when (position) {
-                    0 -> {
-                        // 同城页：暂停视频
-                        videoPlayStateLiveData.value = false
-                    }
-                    1 -> {
-                        // 推荐页：播放视频
-                        videoPlayStateLiveData.value = true
-                    }
-                }
-            }
-        })
 
         //监听Tab重复点击
         binding.tabTitle.addOnTabSelectedListener(object :TabLayout.OnTabSelectedListener{
@@ -111,9 +83,9 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         val tag = "f$position"
         val fragment = childFragmentManager.findFragmentByTag(tag)
 
-        // 检查 Fragment 是否存在且已添加
-        if (fragment is IScrollToTop && fragment.isAdded && !fragment.isDetached) {
-            fragment.scrollToTop()
+        when (position) {
+            0 -> (fragment as? SameCityFragment)?.scrollToTop()
+            1 -> (fragment as? RecommendFragment)?.scrollToTop()
         }
     }
 
@@ -126,6 +98,7 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
             addTab(newTab().setText("消息"))
             addTab(newTab().setText("我"))
 
+            //默认选中第 1 个按钮
             getTabAt(0)?.select()
 
             //监听底部Tab切换
@@ -204,10 +177,5 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
         pagerAdapter=null
         sameCityFragment=null
         recommendFragment=null
-    }
-
-    companion object {
-        // 当前页码（默认推荐页，索引为1）
-        var curPage = 1
     }
 }

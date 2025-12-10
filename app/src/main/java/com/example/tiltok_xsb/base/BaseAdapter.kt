@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.ListAdapter
 import android.view.View
 
+//封装了 ListAdapter 的通用基类，提供了列表数据管理、点击事件处理、增量刷新等常用功能
 abstract class BaseAdapter<VH:RecyclerView.ViewHolder,T>(diffUtil: DiffUtil.ItemCallback<T>) : ListAdapter<T,VH>(diffUtil) {
 
     protected var mList:ArrayList<T> = ArrayList()
@@ -42,7 +43,6 @@ abstract class BaseAdapter<VH:RecyclerView.ViewHolder,T>(diffUtil: DiffUtil.Item
     override fun getItemCount(): Int {
         return mList.size
     }
-
 
     //列表项点击事件接口
     interface OnItemClickListener{
