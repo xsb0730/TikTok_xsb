@@ -42,22 +42,18 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
     private val _loadMoreResult = MutableLiveData<Resource<List<VideoBean>>>()
     val loadMoreResult: LiveData<Resource<List<VideoBean>>> = _loadMoreResult
 
-    private var currentPage = 1
-    private val pageSize = 20
-
     // 下拉刷新
     fun refreshVideos() {
         viewModelScope.launch {
             _refreshResult.value = Resource.Loading()
 
-            currentPage = 1
-            val result = videoRepository.getRecommendVideos(currentPage, pageSize)
+            val result = videoRepository.getRecommendVideos()
 
             if (result.isSuccess) {
                 val videos = result.getOrNull() ?: emptyList()
                 syncCommentCounts(videos)
                 _refreshResult.value = Resource.Success(videos)
-                currentPage++
+
             } else {
                 _refreshResult.value = Resource.Error(result.exceptionOrNull()?.message ?: "刷新失败")
             }
@@ -69,14 +65,14 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
         viewModelScope.launch {
             _loadMoreResult.value = Resource.Loading()
 
-            val result = videoRepository.getRecommendVideos(currentPage, pageSize)
+            val result = videoRepository.getRecommendVideos()
 
             if (result.isSuccess) {
                 val videos = result.getOrNull() ?: emptyList()
                 if (videos.isNotEmpty()) {
                     syncCommentCounts(videos)
                     _loadMoreResult.value = Resource.Success(videos)
-                    currentPage++
+
                 } else {
                     _loadMoreResult.value = Resource.Error("没有更多数据了")
                 }
@@ -108,7 +104,7 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
     //点赞/取消点赞
     fun toggleLike(video: VideoBean, position: Int) {
         viewModelScope.launch {
-            val result = videoRepository.toggleLike(video)
+            val result = videoRepository.toggleLike()
             if (result.isSuccess) {
                 video.isLiked = !video.isLiked
                 if (video.isLiked) {
@@ -126,7 +122,7 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
     //收藏/取消收藏
     fun toggleCollect(video: VideoBean, position: Int) {
         viewModelScope.launch {
-            val result = videoRepository.toggleCollect(video)
+            val result = videoRepository.toggleCollect()
 
             if (result.isSuccess) {
                 video.isCollected = !video.isCollected
@@ -148,8 +144,7 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
     //关注用户
     fun followUser(video: VideoBean, position: Int) {
         viewModelScope.launch {
-            val userId = video.userBean?.userId ?: return@launch
-            val result = videoRepository.followUser(userId)
+            val result = videoRepository.followUser()
             if (result.isSuccess) {
                 video.userBean?.isFollowed = true
                 _followResult.value = Pair(position, true)

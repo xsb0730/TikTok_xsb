@@ -18,6 +18,7 @@ import com.example.tiltok_xsb.ui.viewmodel.RecommendViewModel
 import com.example.tiltok_xsb.utils.Resource
 
 class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({FragmentRecommendBinding.inflate(it)}), IScrollToTop {
+
     //懒加载创建和获取 ViewModel 实例
     private val viewModel:RecommendViewModel by viewModels()
     //双列列表适配器
@@ -57,17 +58,11 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
                 // 启动带共享元素的转场动画
                 startVideoPlayWithTransition(position, itemBinding)
             },
-            onAvatarClick = { _, _ ->
-                // 点击头像跳转到作者页面
-            },
-            onLikeClick = { _, _ ->
-                // 点赞
-            }
+
         )
 
-        //性能优化
         binding.recyclerView.adapter=adapter
-        binding.recyclerView.setHasFixedSize(true)      //RecyclerView 大小固定
+        binding.recyclerView.setHasFixedSize(true)      //RecyclerView宽高固定
     }
 
     // 启动带共享元素转场的视频播放页面

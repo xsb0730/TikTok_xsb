@@ -32,23 +32,19 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-    private var currentPage = 1     // 当前页码
-    private val pageSize = 20       // 每页数量
-
     //视频缓存
     private val allVideos = mutableListOf<VideoBean>()
 
     // 加载推荐视频（首次加载或刷新）
     fun loadRecommendVideos(isRefresh: Boolean = false) {
         if (isRefresh) {
-            currentPage = 1
             allVideos.clear()
         }
 
         viewModelScope.launch {
             _videoList.value = Resource.Loading()
 
-            val result = videoRepository.getRecommendVideos(currentPage, pageSize)
+            val result = videoRepository.getRecommendVideos()  // 从数据源加载视频
             if (result.isSuccess) {
                 val videos = result.getOrNull() ?: emptyList()
 
@@ -60,7 +56,6 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
 
                 _videoList.value = Resource.Success(allVideos.toList())
 
-                currentPage++
             } else {
                 _videoList.value = Resource.Error(result.exceptionOrNull()?.message ?: "加载失败")
             }
@@ -72,7 +67,7 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
         viewModelScope.launch {
             _loadMoreResult.value = Resource.Loading()
 
-            val result = videoRepository.getRecommendVideos(currentPage, pageSize)
+            val result = videoRepository.getRecommendVideos()
             if (result.isSuccess) {
                 val newVideos = result.getOrNull() ?: emptyList()
 
@@ -82,7 +77,6 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
 
                     allVideos.addAll(newVideos)
                     _loadMoreResult.value = Resource.Success(newVideos)
-                    currentPage++
                 } else {
                     _loadMoreResult.value = Resource.Error("没有更多数据了")
                 }
