@@ -7,12 +7,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
-import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingActivity
 import com.example.tiltok_xsb.databinding.ActivityVideoPlayBinding
 import com.example.tiltok_xsb.data.model.VideoBean
@@ -75,29 +71,13 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             videoList.addAll(it)
         }
 
-        // 数据校验
-        if (videoList.isEmpty()) {
-            Toast.makeText(this, "没有视频数据", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
+        supportPostponeEnterTransition()        // 延迟启动转场动画，等待目标 View 准备好
         setupViewPager()            // 设置 ViewPager2
         setupClickListeners()       // 设置点击事件
         setupTouchHelper()          // 设置触摸手势（下拉刷新/上拉加载）
         observeViewModel()          // 观察数据变化
         observeCommentViewModel()   // 观察评论数变化
 
-        // 延迟启动转场动画，等待目标 View 准备好
-        supportPostponeEnterTransition()
-
-        // 初始化封面，转场动画的目标 View
-        if (isFirstEnter) {
-            loadCoverForPosition(currentPosition)
-        }
-
-        // 监听转场动画结束
-        setupTransitionListener()
     }
 
     //设置页面
@@ -105,6 +85,15 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         videoPlayAdapter = VideoPlayAdapter(
             videoList,
             viewModel,
+            onFirstFrameReady = {
+                if (isFirstEnter) {
+                    isFirstEnter = false
+                    // 切回主线程启动动画
+                    binding.root.post {
+                        supportStartPostponedEnterTransition()
+                    }
+                }
+            },
             onCommentClick = { video, position ->
                 showCommentDialog(video, position)
             }
@@ -117,24 +106,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         //定位到点击的视频位置
         binding.viewPager.setCurrentItem(currentPosition, false)
 
-        // 监听布局完成事件
-        val recyclerView = binding.viewPager.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
-        recyclerView?.viewTreeObserver?.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                // 移除监听器
-                recyclerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-
-                // 延迟执行，确保布局稳定
-                recyclerView.post {
-                    // 通知适配器提前开始准备视频
-                    videoPlayAdapter?.onPageSelected(currentPosition)
-
-                    // 启动转场动画
-                    supportStartPostponedEnterTransition()
-                }
-            }
-        })
-
         // 监听页面切换
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -143,75 +114,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 videoPlayAdapter?.onPageSelected(position)
             }
         })
-    }
-
-    // 加载指定位置的封面
-    private fun loadCoverForPosition(position: Int) {
-        val video = videoList.getOrNull(position) ?: return
-
-        // 显示全局封面层
-        binding.ivGlobalCover.visibility = View.VISIBLE
-        binding.ivGlobalCover.alpha = 1f
-
-        ViewCompat.setTransitionName(binding.ivGlobalCover, "video_cover_$position")
-
-        // 加载封面图片
-        if (video.coverRes != 0) {
-            Glide.with(this)
-                .load(video.coverRes)
-                .into(binding.ivGlobalCover)
-        } else {
-            Glide.with(this)
-                .asBitmap()
-                .load(android.net.Uri.parse(video.videoRes))
-                .apply(RequestOptions().frame(0))
-                .placeholder(R.drawable.loading)
-                .error(R.drawable.default_error)
-                .into(binding.ivGlobalCover)
-        }
-    }
-
-    //转场动画监听
-    private fun setupTransitionListener() {
-        // 监听共享元素转场动画结束
-        window.sharedElementEnterTransition?.addListener(object : android.transition.Transition.TransitionListener {
-            override fun onTransitionStart(transition: android.transition.Transition?) {
-                android.util.Log.d("VideoPlayActivity", "✅ 转场动画开始")
-            }
-
-            //转场动画结束
-            override fun onTransitionEnd(transition: android.transition.Transition?) {
-                // 转场动画结束后隐藏封面
-                if (isFirstEnter) {
-                    hideCover()
-                    isFirstEnter = false
-                }
-            }
-
-            //转场动画取消
-            override fun onTransitionCancel(transition: android.transition.Transition?) {
-                // 动画取消也要隐藏封面
-                if (isFirstEnter) {
-                    hideCover()
-                    isFirstEnter = false
-                }
-            }
-
-            override fun onTransitionPause(transition: android.transition.Transition?) {}
-            override fun onTransitionResume(transition: android.transition.Transition?) {}
-        })
-    }
-
-    // 隐藏封面
-    private fun hideCover() {
-        binding.ivGlobalCover.animate()
-            .alpha(0f)
-            .setDuration(300)
-            .withEndAction {
-                binding.ivGlobalCover.visibility = View.GONE
-                binding.ivGlobalCover.alpha = 1f
-            }
-            .start()
     }
 
     //设置返回按钮点击监听
@@ -238,7 +140,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
                 // 视频区域同步向下移动
                 binding.viewPager.translationY = distance
-                binding.ivGlobalCover.translationY = distance
+//                binding.ivGlobalCover.translationY = distance
 
                 // 根据距离更新文字和颜色
                 when {
@@ -336,11 +238,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                         .setDuration(300)
                         .start()
 
-                    binding.ivGlobalCover.animate()
-                        .translationY(0f)
-                        .setDuration(300)
-                        .start()
-
                     resource.data?.let { newVideos ->
 
                         // 保存当前位置
@@ -402,11 +299,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
                     // 视频区域同步快速回弹
                     binding.viewPager.animate()
-                        .translationY(0f)
-                        .setDuration(200)
-                        .start()
-
-                    binding.ivGlobalCover.animate()
                         .translationY(0f)
                         .setDuration(200)
                         .start()

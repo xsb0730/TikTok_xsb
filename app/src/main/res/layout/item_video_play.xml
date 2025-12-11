@@ -9,7 +9,6 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-
     <!-- 视频播放器 -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/player_view"
@@ -19,6 +18,14 @@
         app:show_buffering="when_playing"
         app:use_controller="false"
         app:surface_type="surface_view"/>
+
+    <!-- 封面 -->
+    <ImageView
+        android:id="@+id/iv_cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="visible" />
 
     <!-- 双击点赞动画层 -->
     <com.example.tiltok_xsb.ui.view.LikeAnimationView

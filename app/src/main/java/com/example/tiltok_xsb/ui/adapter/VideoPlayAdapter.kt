@@ -2,6 +2,8 @@ package com.example.tiltok_xsb.ui.adapter
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +20,11 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tiltok_xsb.databinding.ItemVideoPlayBinding
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.Target
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
@@ -28,6 +34,7 @@ import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
     private val viewModel: VideoPlayViewModel,
+    private val onFirstFrameReady: (() -> Unit)? = null,
     private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
@@ -43,21 +50,34 @@ class VideoPlayAdapter(
         private var exoPlayer: ExoPlayer? = null
         private var recordAnimator: ObjectAnimator? = null
         private lateinit var currentVideo: VideoBean
-        private var isPlayerReady = false
-        private var currentPosition: Int = -1
-        // 标记是否应该播放（只有调用 play() 后才为 true）
-        private var shouldPlay = false
 
         //将视频数据绑定到ViewHolder的视图上
         @SuppressLint("SetTextI18n")
         fun bind(video: VideoBean, position: Int) {
 
             currentVideo = video
-            currentPosition = position      // 保存传入的位置
-            shouldPlay = false              // 重置标志
-            isPlayerReady = false           // 重置准备状态
+            binding.ivCover.visibility = View.VISIBLE
 
             with(binding) {
+                ivCover.transitionName = "video_cover_$position"
+
+                //加载视频封面
+                Glide.with(binding.ivCover)
+                    .asBitmap()
+                    .load(video.videoRes)
+                    .apply(RequestOptions().frame(0))
+                    .listener(object : RequestListener<Bitmap> {
+                        override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean): Boolean {
+                            if (bindingAdapterPosition == position) onFirstFrameReady?.invoke()
+                            return false
+                        }
+                        override fun onResourceReady(resource: Bitmap?, model: Any?, target: Target<Bitmap>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                            if (bindingAdapterPosition == position) onFirstFrameReady?.invoke()
+                            return false
+                        }
+                    })
+                    .into(binding.ivCover)
+
                 //加载头像
                 loadAvatar(video)
 
@@ -191,14 +211,9 @@ class VideoPlayAdapter(
         }
 
         // 设置 ExoPlayer
-        @OptIn(UnstableApi::class)  //使用了不稳定API
         private fun setupExoPlayer(video: VideoBean) {
-
             // 检查 videoRes 是否为空
-            if (video.videoRes.isEmpty()) {
-                Toast.makeText(binding.root.context, "视频路径为空", Toast.LENGTH_SHORT).show()
-                return
-            }
+            if (video.videoRes.isEmpty()) return
 
             try {
                 // 创建 ExoPlayer 实例
@@ -212,46 +227,31 @@ class VideoPlayAdapter(
 
                         // 设置播放监听，当视频准备就绪时，触发回调
                         addListener(object : Player.Listener {
+                            override fun onEvents(player: Player, events: Player.Events) {
+                                if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
+                                    binding.ivCover.visibility = View.GONE
+                                }
+                            }
+
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 when (playbackState) {
                                     Player.STATE_BUFFERING -> {
-                                        binding.progressBar.visibility = View.VISIBLE
                                     }
-
                                     Player.STATE_READY -> {
-                                        binding.progressBar.visibility = View.GONE
-
-                                        if (!isPlayerReady) {
-                                            isPlayerReady = true
-
-                                            // 如果需要播放，立即开始
-                                            if (shouldPlay && !isPlaying) {
-                                                play()
-                                            }
-                                        }
+                                        binding.ivCover.visibility = View.GONE
                                     }
-
-                                    Player.STATE_ENDED -> {
-                                        android.util.Log.d(
-                                            "VideoPlayAdapter",
-                                            "[pos=$currentPosition] 播放结束"
-                                        )
-                                    }
-
                                     Player.STATE_IDLE -> {
-                                        android.util.Log.d(
-                                            "VideoPlayAdapter",
-                                            "[pos=$currentPosition] 播放器空闲"
-                                        )
+                                    }
+                                    Player.STATE_ENDED -> {
                                     }
                                 }
                             }
 
-                            //播放状态变化
                             override fun onIsPlayingChanged(isPlaying: Boolean) {
                                 if (isPlaying) {
                                     startRecordAnimation()
                                     hidePauseIcon()
+                                    binding.ivCover.visibility = View.GONE
                                 } else {
                                     pauseRecordAnimation()
                                     showPauseIcon()
@@ -260,23 +260,13 @@ class VideoPlayAdapter(
 
                             override fun onPlayerError(error: PlaybackException) {
                                 binding.progressBar.visibility = View.GONE
-                                Toast.makeText(
-                                    binding.root.context,
-                                    "视频加载失败",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(binding.root.context, "播放失败", Toast.LENGTH_SHORT).show()
                             }
                         })
 
                         // 设置视频源
-                        val uri = android.net.Uri.parse(video.videoRes)
-                        val mediaItem = MediaItem.fromUri(uri)
-
-                        val dataSourceFactory = DefaultDataSource.Factory(binding.root.context)
-                        val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                            .createMediaSource(mediaItem)
-                        setMediaSource(mediaSource)
-                        prepare()
+                        val mediaItem = MediaItem.fromUri(android.net.Uri.parse(video.videoRes))
+                        setMediaItem(mediaItem)
                         playWhenReady = false  // 默认不自动播放
                     }
             } catch (e: Exception) {
@@ -321,12 +311,7 @@ class VideoPlayAdapter(
 
         //播放
         fun play() {
-
-            shouldPlay = true
-
-            if (exoPlayer == null) {
-                return
-            }
+            if (exoPlayer == null) return
 
             exoPlayer?.let { player ->
                 when (player.playbackState) {
@@ -353,16 +338,11 @@ class VideoPlayAdapter(
 
         //暂停
         fun pause() {
-            // 清除播放标志
-            shouldPlay = false
             exoPlayer?.pause()
         }
 
         //视频资源释放，播放状态重置
         fun release() {
-            shouldPlay = false
-            isPlayerReady = false
-
             exoPlayer?.stop()
             exoPlayer?.clearMediaItems()
             exoPlayer?.release()
@@ -371,7 +351,7 @@ class VideoPlayAdapter(
             stopRecordAnimation()
             binding.ivPause.visibility = View.GONE
             binding.progressBar.visibility = View.GONE
-
+            binding.ivCover.visibility = View.VISIBLE
         }
 
         //启动唱片旋转动画的方法
@@ -388,7 +368,7 @@ class VideoPlayAdapter(
                     interpolator = LinearInterpolator()    // 插值器：匀速旋转
                 }
             }
-            recordAnimator?.resume()
+            recordAnimator?.start()
         }
 
         //暂停唱片旋转动画的方法
@@ -437,23 +417,6 @@ class VideoPlayAdapter(
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
-        val binding = ItemVideoPlayBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return VideoViewHolder(binding)
-    }
-
-    override fun getItemCount(): Int {
-        return videoList.size
-    }
-
-    override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
-        holder.bind(videoList[position], position)
-    }
-
     //更新列表中指定位置视频的点赞状态
     fun updateLikeStatus(position: Int, isLiked: Boolean) {
         videoHolders[position]?.updateLikeState(isLiked)
@@ -487,13 +450,8 @@ class VideoPlayAdapter(
 
         // 播放当前视频
         val holder = videoHolders[position]
-        if (holder == null) {
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                videoHolders[position]?.play()
-            }, 200)
-        } else {
-            holder.play()
-        }
+
+        holder?.play()
     }
 
     //恢复当前视频
@@ -515,5 +473,22 @@ class VideoPlayAdapter(
         videoHolders.values.forEach { it.release() }
         videoHolders.clear()
         currentPlayingPosition = -1  // 重置播放位置
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
+        val binding = ItemVideoPlayBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return VideoViewHolder(binding)
+    }
+
+    override fun getItemCount(): Int {
+        return videoList.size
+    }
+
+    override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
+        holder.bind(videoList[position], position)
     }
 }

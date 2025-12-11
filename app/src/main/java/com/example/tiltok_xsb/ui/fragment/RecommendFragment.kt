@@ -29,20 +29,15 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     private var isFirstLoad = true
     // 标记是否还有更多数据
     private var hasMoreData = true
-    // 上次触发加载的时间戳（防抖）
-    private var lastLoadTime = 0L
-    // 加载间隔（毫秒）
-    private val loadInterval = 1000L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        viewModel.loadRecommendVideos(isRefresh = true) //首次加载视频
         initRecyclerView()      //设置 RecyclerView（双列瀑布流）
         setRefreshEvent()       //设置下拉刷新
         setupLoadMore()         //设置上拉加载更多
         observeViewModel()      //观察 ViewModel 数据变化
-
-        viewModel.loadRecommendVideos(isRefresh = true)
 
     }
 
@@ -66,18 +61,12 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
     }
 
     // 启动带共享元素转场的视频播放页面
-    private fun startVideoPlayWithTransition(
-        position: Int,
-        itemBinding: ItemGridVideoBinding
-    ) {
+    private fun startVideoPlayWithTransition(position: Int, itemBinding: ItemGridVideoBinding) {
         // 获取完整视频列表
         val videoList = viewModel.getCurrentVideoList()
 
         // 创建共享元素配对
-        val coverPair = Pair.create(
-            itemBinding.ivCover as View,
-            "video_cover_$position"
-        )
+        val coverPair = Pair.create(itemBinding.ivCover as View, "video_cover_$position")
 
         // 创建转场动画选项
         val options = ActivityOptionsCompat.makeSceneTransitionAnimation(

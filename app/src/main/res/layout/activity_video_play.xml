@@ -107,20 +107,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 全局封面 -->
-    <ImageView
-        android:id="@+id/iv_global_cover"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:scaleType="centerCrop"
-        android:visibility="visible"
-        android:elevation="2dp"
-        android:contentDescription="@string/video_cover"
-        app:layout_constraintTop_toBottomOf="@id/top_bar"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <!-- 下拉刷新容器 -->
     <LinearLayout
         android:id="@+id/refresh_container"

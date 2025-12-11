@@ -3,7 +3,6 @@ package com.example.tiltok_xsb.base
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.ListAdapter
-import android.view.View
 
 //封装了 ListAdapter 的通用基类，提供了一般性的逻辑
 abstract class BaseAdapter<VH:RecyclerView.ViewHolder,T>(diffUtil: DiffUtil.ItemCallback<T>) : ListAdapter<T,VH>(diffUtil) {
