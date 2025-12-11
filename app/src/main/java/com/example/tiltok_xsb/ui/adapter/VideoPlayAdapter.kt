@@ -98,7 +98,7 @@ class VideoPlayAdapter(
 
                 setupClickListeners(video, position)        //设置点击监听
                 setupExoPlayer(video)                       // 设置 ExoPlayer视频播放器
-                setupLikeAnimationView(video, position)     // 设置双击点赞动画监听
+                setupLikeAnimationView(video, position)     // 设置双击点赞动画/单机暂停监听
             }
 
             //保存ViewHolder
@@ -188,7 +188,7 @@ class VideoPlayAdapter(
             }
         }
 
-        // 设置双击点赞动画视图的监听
+        // 设置双击点赞动画视图/暂停的监听
         private fun setupLikeAnimationView(video: VideoBean, position: Int) {
             with(binding.likeAnimationView) {
                 // 双击点赞
@@ -444,9 +444,7 @@ class VideoPlayAdapter(
         currentPlayingPosition = position
 
         // 播放当前视频
-        val holder = videoHolders[position]
-
-        holder?.play()
+        val holder = videoHolders[position]?.play()
     }
 
     //恢复当前视频

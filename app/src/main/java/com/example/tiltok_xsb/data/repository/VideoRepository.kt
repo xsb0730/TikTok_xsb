@@ -9,18 +9,16 @@ class VideoRepository(
     private val localDataSource: VideoLocalDataSource = VideoLocalDataSource()
 ) {
 
-    /**
-     * 获取推荐视频列表
-     */
+
+     //获取推荐视频列表
     suspend fun getRecommendVideos(): Result<List<VideoBean>> {
         return withContext(Dispatchers.IO) {
           Result.success(localDataSource.getRecommendVideos())
         }
     }
 
-    /**
-     * 点赞/取消点赞
-     */
+
+    //点赞/取消点赞
     suspend fun toggleLike(): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             return@withContext try {
@@ -33,9 +31,7 @@ class VideoRepository(
         }
     }
 
-    /**
-     * 收藏/取消收藏
-     */
+    //收藏/取消收藏
     suspend fun toggleCollect(): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             return@withContext try {
@@ -48,9 +44,7 @@ class VideoRepository(
         }
     }
 
-    /**
-     * 关注用户
-     */
+    //关注
     suspend fun followUser(): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             return@withContext try {

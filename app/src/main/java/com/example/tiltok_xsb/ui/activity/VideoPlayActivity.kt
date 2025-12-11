@@ -123,6 +123,20 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         }
     }
 
+    // 拦截触摸事件
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // 先让 touchHelper 尝试处理
+        val handled = touchHelper?.onTouchEvent(ev) ?: false
+
+        // 如果 touchHelper 拦截了事件，返回 true
+        if (handled) {
+            return true
+        }
+
+        // 否则交给父类处理（让 ViewPager2 正常工作）
+        return super.dispatchTouchEvent(ev)
+    }
+
     //设置触摸监听（上下滑动）
     private fun setupTouchHelper() {
         touchHelper = VideoPlayTouchHelper(
@@ -140,7 +154,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
                 // 视频区域同步向下移动
                 binding.viewPager.translationY = distance
-//                binding.ivGlobalCover.translationY = distance
 
                 // 根据距离更新文字和颜色
                 when {
@@ -399,20 +412,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
 
         //暂停当前视频播放
         videoPlayAdapter?.pauseCurrentVideo()
-    }
-
-    // 拦截触摸事件
-    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        // 先让 touchHelper 尝试处理
-        val handled = touchHelper?.onTouchEvent(ev) ?: false
-
-        // 如果 touchHelper 拦截了事件，返回 true
-        if (handled) {
-            return true
-        }
-
-        // 否则交给父类处理（让 ViewPager2 正常工作）
-        return super.dispatchTouchEvent(ev)
     }
 
     //释放

@@ -48,14 +48,10 @@ class UserRepository(private val context: Context) {
     suspend fun uploadAvatar(uri: Uri): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // 压缩图片
-                val compressedFile = ImageUtils.compressImage(context, uri, maxSize = 512)
-                    ?: return@withContext Result.failure(Exception("图片压缩失败"))
-
                 delay(1000) // 模拟上传延迟
 
                 // 模拟返回的头像 URL
-                val avatarUrl = uri.toString() // 实际应该是服务器返回的 URL
+                val avatarUrl = uri.toString()
 
                 Result.success(avatarUrl)
             } catch (e: Exception) {

@@ -28,10 +28,10 @@ class LikeAnimationView @JvmOverloads constructor(
 
     private var gestureDetector: GestureDetector? = null
 
-    /** 爱心图片大小（dp 转 px） */
+    //爱心图片大小（dp 转 px）
     private val likeViewSize = (100 * context.resources.displayMetrics.density).toInt()
 
-    /** 随机旋转角度 */
+    // 随机旋转角度
     private val angles = intArrayOf(-30, 0, 30)
 
     private var onPlayPauseListener: OnPlayPauseListener? = null
@@ -66,9 +66,7 @@ class LikeAnimationView @JvmOverloads constructor(
         }
     }
 
-    /**
-     * 添加爱心动画
-     */
+    //添加爱心动画
     private fun addLikeView(e: MotionEvent) {
         val imageView = ImageView(context)
         imageView.setImageResource(R.mipmap.ic_like)
@@ -82,9 +80,7 @@ class LikeAnimationView @JvmOverloads constructor(
         playAnim(imageView)
     }
 
-    /**
-     * 播放爱心动画
-     */
+    //播放爱心动画
     private fun playAnim(view: View) {
         val animationSet = AnimationSet(true)
         val degrees = angles[Random.nextInt(3)]
@@ -112,30 +108,22 @@ class LikeAnimationView @JvmOverloads constructor(
         view.startAnimation(animationSet)
     }
 
-    /**
-     * 播放/暂停回调接口
-     */
+    //播放/暂停回调接口
     fun interface OnPlayPauseListener {
         fun onPlayOrPause()
     }
 
-    /**
-     * 点赞回调接口
-     */
+    //点赞回调接口
     fun interface OnLikeListener {
         fun onLike()
     }
 
-    /**
-     * 设置单击播放暂停事件
-     */
+    //设置单击播放暂停事件
     fun setOnPlayPauseListener(listener: OnPlayPauseListener?) {
         this.onPlayPauseListener = listener
     }
 
-    /**
-     * 设置双击点赞事件
-     */
+    //设置双击点赞事件
     fun setOnLikeListener(listener: OnLikeListener?) {
         this.onLikeListener = listener
     }
