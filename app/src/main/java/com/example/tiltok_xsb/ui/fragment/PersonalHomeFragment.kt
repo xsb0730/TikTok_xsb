@@ -66,7 +66,6 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         }
     }
 
-
     // 图库选择结果
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()

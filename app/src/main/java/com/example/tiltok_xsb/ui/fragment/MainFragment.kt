@@ -27,7 +27,6 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
         setFragment()
         setMainMenu()
-
     }
 
     //设置顶部Tab和ViewPager2实现左右滑动
