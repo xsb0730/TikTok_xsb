@@ -24,12 +24,6 @@ class RecommendViewModel(application: Application): AndroidViewModel(application
     private val _loadMoreResult = MutableLiveData<Resource<List<VideoBean>>>()
     val loadMoreResult: LiveData<Resource<List<VideoBean>>> = _loadMoreResult
 
-    private val _likeResult = MutableLiveData<Pair<Int, Boolean>>() // <position, isLiked>
-    val likeResult: LiveData<Pair<Int, Boolean>> = _likeResult
-
-    private val _followResult = MutableLiveData<Pair<Int, Boolean>>() // <userId, isFollowed>
-    val followResult: LiveData<Pair<Int, Boolean>> = _followResult
-
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 

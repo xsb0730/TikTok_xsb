@@ -112,35 +112,24 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
 
-                // 只处理向上滚动
-                if (dy <= 0) return
-
-                // 防止重复触发
-                if (isLoading || !hasMoreData) {
+                if (dy <= 0 || isLoading || !hasMoreData) {
                     return
                 }
 
-                // 距离上次加载不足 1 秒则不触发(防抖）
-                val currentTime = System.currentTimeMillis()
-                if (currentTime - lastLoadTime < loadInterval) {
-                    return
-                }
-
-                // 获取布局管理器
+                // 获取布局管理器，获取位置信息
                 val layoutManager=recyclerView.layoutManager as StaggeredGridLayoutManager
 
-                //最后一个可见项的位置
-                val lastVisibleItems=IntArray(2)
+                // 获取每一列最后可见的 item 位置
+                val lastVisibleItems = IntArray(layoutManager.spanCount)
                 layoutManager.findLastVisibleItemPositions(lastVisibleItems)
-                val lastVisibleItem=lastVisibleItems.maxOrNull()?:0
 
-                // 获取总项数
-                val totalItemCount=layoutManager.itemCount
+                // 取最大值，代表整个列表视觉上的最底部位置
+                val lastVisibleItemPosition = lastVisibleItems.maxOrNull() ?: 0
+                val totalItemCount = layoutManager.itemCount
 
-                //滚动到倒数第4个加载更多
-                if(lastVisibleItem>=totalItemCount-4&&totalItemCount>0){
-                    isLoading = true
-                    lastLoadTime = currentTime
+                // 触发加载：倒数第 4 个时触发
+                if (lastVisibleItemPosition >= totalItemCount - 4 && totalItemCount > 0) {
+                    isLoading = true        // 立即上锁
                     viewModel.loadMore()
                 }
             }
@@ -185,58 +174,23 @@ class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({Fragmen
 
                 }
                 is Resource.Success -> {
-                    resource.data?.let { newVideos ->
-                        if (newVideos.isEmpty()) {
-                            // 没有更多数据了
-                            hasMoreData = false
-                            Toast.makeText(context, "没有更多数据了", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // 记录当前滚动位置
-                            val layoutManager = binding.recyclerView.layoutManager as StaggeredGridLayoutManager
+                    val newVideos = resource.data ?: emptyList()
 
-                            // 记录第一个可见项的位置和偏移量
-                            val firstVisibleItems = IntArray(2)
-                            layoutManager.findFirstVisibleItemPositions(firstVisibleItems)
-                            val firstVisiblePosition = firstVisibleItems.minOrNull() ?: 0
-                            val firstView = layoutManager.findViewByPosition(firstVisiblePosition)
-                            val topOffset = firstView?.top ?: 0
-
-                            // 添加新数据
-                            adapter?.appendList(newVideos)
-
-                            // 恢复滚动位置
-                            binding.recyclerView.post {
-                                layoutManager.scrollToPositionWithOffset(firstVisiblePosition, topOffset)
-                            }
-                        }
+                    if (newVideos.isEmpty()) {
+                        // 数据耗尽
+                        hasMoreData = false
+                        Toast.makeText(context, "没有更多数据了", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // 直接追加数据
+                        adapter?.appendList(newVideos)
                     }
-
-                    // 延迟重置 isLoading，确保数据渲染完成
-                    binding.recyclerView.postDelayed({
-                        isLoading = false
-                    }, 300)
+                    // 立即解锁
+                    isLoading = false
                 }
                 is Resource.Error -> {
                     isLoading = false  //  加载失败，恢复状态
                     Toast.makeText(context, resource.message ?: "加载失败", Toast.LENGTH_SHORT).show()
                 }
-            }
-        }
-
-        // 观察点赞结果
-        viewModel.likeResult.observe(viewLifecycleOwner) { (position, isLiked) ->
-            adapter?.updateLikeStatus(position, isLiked)
-            Toast.makeText(
-                context,
-                if (isLiked) "已点赞" else "取消点赞",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-
-        // 观察关注结果
-        viewModel.followResult.observe(viewLifecycleOwner) { (_, isFollowed) ->
-            if (isFollowed) {
-                Toast.makeText(context, "已关注", Toast.LENGTH_SHORT).show()
             }
         }
 
