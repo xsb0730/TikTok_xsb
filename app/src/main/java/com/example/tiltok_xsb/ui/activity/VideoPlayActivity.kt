@@ -37,6 +37,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     private var isLoadingMore = false
     private var isFirstEnter = true
 
+    //companion object直接通过类名来访问startWithTransition方法
     companion object{
         private const val KEY_VIDEO_LIST="video_list"
         private const val KEY_POSITION="position"

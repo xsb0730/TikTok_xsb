@@ -133,7 +133,8 @@ app/src/main/java/com/example/tiltok_xsb/
 - **Target SDK**: 33 (Android 13)
 - **Compile SDK**: 35 (Android 15)
 
-
+## 待修复BUG
+- 点击双列外流卡片进入单列视频伴随画面放大转场后，但封面有时候无法及时关闭的问题
 
 ---
 

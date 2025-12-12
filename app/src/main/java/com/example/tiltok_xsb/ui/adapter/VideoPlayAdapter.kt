@@ -33,14 +33,17 @@ class VideoPlayAdapter(
     private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
+    override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
+        holder.bind(videoList[position], position)
+    }
+
     //当前正在播放的位置
     private var currentPlayingPosition = -1
-    //缓存 ViewHolder
+    //缓存 VideoViewHolder
     private val videoHolders = mutableMapOf<Int, VideoViewHolder>()
 
     //缓存列表项布局中的所有控件，绑定控件的点击、状态更新等逻辑，将视频数据绑定到布局控件上实现列表项的渲染
-    inner class VideoViewHolder(val binding: ItemVideoPlayBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    inner class VideoViewHolder(val binding: ItemVideoPlayBinding) : RecyclerView.ViewHolder(binding.root) {
 
         private var exoPlayer: ExoPlayer? = null
         private var recordAnimator: ObjectAnimator? = null
@@ -83,11 +86,9 @@ class VideoPlayAdapter(
                     .into(ivHeadAnim)
 
                 //设置文字信息
-                val nickname = video.userBean?.nickName
-                    ?: root.context.getString(R.string.default_user_name)
+                val nickname = video.userBean?.nickName ?: root.context.getString(R.string.default_user_name)
                 tvNickname.text = root.context.getString(R.string.user_nickname_format, nickname)
                 tvTitle.text = video.content ?: ""
-
                 tvMarquee.text = "@$nickname 创作的原声 - $nickname"       //动态设置走马灯文本
 
                 updateUIState(video)                                     //设置统计数据
@@ -103,106 +104,6 @@ class VideoPlayAdapter(
 
             //保存ViewHolder
             videoHolders[position] = this
-        }
-
-        //加载头像
-        private fun loadAvatar(video: VideoBean) {
-            val avatarRes = video.userBean?.headId ?: R.drawable.default_avatar
-            Glide.with(binding.ivAvatar)
-                .load(avatarRes)
-                .apply(RequestOptions().circleCrop())
-                .placeholder(R.drawable.default_avatar)
-                .error(R.drawable.default_avatar)
-                .into(binding.ivAvatar)
-        }
-
-        //更新推荐单列页面状态
-        private fun updateUIState(video: VideoBean) {
-            with(binding) {
-                // 点赞状态
-                ivLike.text = ivLike.context.getString(R.string.icon_like_fill)
-                ivLike.setTextColor(
-                    if (video.isLiked) {
-                        ivLike.context.getColor(R.color.red)      // 已点赞：红色
-                    } else {
-                        ivLike.context.getColor(R.color.white)    // 未点赞：白色
-                    }
-                )
-
-                //收藏状态
-                ivCollect.text = ivCollect.context.getString(R.string.icon_collect)
-                ivCollect.setTextColor(
-                    if (video.isCollected) {
-                        ivCollect.context.getColor(R.color.yellow)  // 已收藏：黄色
-                    } else {
-                        ivCollect.context.getColor(R.color.white)   // 未收藏：白色
-                    }
-                )
-
-                // 数字
-                tvLikecount.text = formatCount(video.likeCount)
-                tvCommentcount.text = formatCount(video.commentCount)
-                tvCollectcount.text = formatCount(video.collectCount)
-                tvSharecount.text = formatCount(video.shareCount)
-            }
-        }
-
-        //设置点击监听
-        private fun setupClickListeners(video: VideoBean, position: Int) {
-            with(binding) {
-                // 点赞
-                rlLike.setOnClickListener {
-                    viewModel.toggleLike(video, position)
-                }
-
-                // 评论
-                ivComment.setOnClickListener {
-                    onCommentClick?.invoke(video, position)
-                }
-
-                // 收藏
-                ivCollect.setOnClickListener {
-                    viewModel.toggleCollect(video, position)
-                }
-
-                // 分享
-                ivShare.setOnClickListener {
-                    Toast.makeText(it.context, "分享功能待实现", Toast.LENGTH_SHORT).show()
-                }
-
-                // 头像
-                ivAvatar.setOnClickListener {
-                    Toast.makeText(it.context, "进入用户主页功能待实现", Toast.LENGTH_SHORT).show()
-                }
-
-                // 关注
-                ivFollow.setOnClickListener {
-                    viewModel.followUser(video, position)
-                }
-
-                // 唱片点击
-                rlRecord.setOnClickListener {
-                    togglePlayPause()
-                }
-
-            }
-        }
-
-        // 设置双击点赞动画视图/暂停的监听
-        private fun setupLikeAnimationView(video: VideoBean, position: Int) {
-            with(binding.likeAnimationView) {
-                // 双击点赞
-                setOnLikeListener {
-                    if (!video.isLiked) {
-                        viewModel.toggleLike(video, position)
-                    }
-                }
-
-                // 单击播放/暂停
-                setOnPlayPauseListener {
-                    togglePlayPause()
-                }
-            }
         }
 
         // 设置 ExoPlayer
@@ -267,6 +168,106 @@ class VideoPlayAdapter(
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(binding.root.context, "播放器初始化失败", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        //设置点击监听
+        private fun setupClickListeners(video: VideoBean, position: Int) {
+            with(binding) {
+                // 点赞
+                rlLike.setOnClickListener {
+                    viewModel.toggleLike(video, position)
+                }
+
+                // 评论
+                ivComment.setOnClickListener {
+                    onCommentClick?.invoke(video, position)
+                }
+
+                // 收藏
+                ivCollect.setOnClickListener {
+                    viewModel.toggleCollect(video, position)
+                }
+
+                // 分享
+                ivShare.setOnClickListener {
+                    Toast.makeText(it.context, "分享功能待实现", Toast.LENGTH_SHORT).show()
+                }
+
+                // 头像
+                ivAvatar.setOnClickListener {
+                    Toast.makeText(it.context, "进入用户主页功能待实现", Toast.LENGTH_SHORT).show()
+                }
+
+                // 关注
+                ivFollow.setOnClickListener {
+                    viewModel.followUser(video, position)
+                }
+
+                // 唱片点击
+                rlRecord.setOnClickListener {
+                    togglePlayPause()
+                }
+
+            }
+        }
+
+        // 设置双击点赞动画视图/暂停的监听
+        private fun setupLikeAnimationView(video: VideoBean, position: Int) {
+            with(binding.likeAnimationView) {
+                // 双击点赞
+                setOnLikeListener {
+                    if (!video.isLiked) {
+                        viewModel.toggleLike(video, position)
+                    }
+                }
+
+                // 单击播放/暂停
+                setOnPlayPauseListener {
+                    togglePlayPause()
+                }
+            }
+        }
+
+        //加载头像
+        private fun loadAvatar(video: VideoBean) {
+            val avatarRes = video.userBean?.headId ?: R.drawable.default_avatar
+            Glide.with(binding.ivAvatar)
+                .load(avatarRes)
+                .apply(RequestOptions().circleCrop())
+                .placeholder(R.drawable.default_avatar)
+                .error(R.drawable.default_avatar)
+                .into(binding.ivAvatar)
+        }
+
+        //更新推荐单列页面状态
+        private fun updateUIState(video: VideoBean) {
+            with(binding) {
+                // 点赞状态
+                ivLike.text = ivLike.context.getString(R.string.icon_like_fill)
+                ivLike.setTextColor(
+                    if (video.isLiked) {
+                        ivLike.context.getColor(R.color.red)      // 已点赞：红色
+                    } else {
+                        ivLike.context.getColor(R.color.white)    // 未点赞：白色
+                    }
+                )
+
+                //收藏状态
+                ivCollect.text = ivCollect.context.getString(R.string.icon_collect)
+                ivCollect.setTextColor(
+                    if (video.isCollected) {
+                        ivCollect.context.getColor(R.color.yellow)  // 已收藏：黄色
+                    } else {
+                        ivCollect.context.getColor(R.color.white)   // 未收藏：白色
+                    }
+                )
+
+                // 数字
+                tvLikecount.text = formatCount(video.likeCount)
+                tvCommentcount.text = formatCount(video.commentCount)
+                tvCollectcount.text = formatCount(video.collectCount)
+                tvSharecount.text = formatCount(video.shareCount)
             }
         }
 
@@ -444,7 +445,7 @@ class VideoPlayAdapter(
         currentPlayingPosition = position
 
         // 播放当前视频
-        val holder = videoHolders[position]?.play()
+        videoHolders[position]?.play()
     }
 
     //恢复当前视频
@@ -481,7 +482,4 @@ class VideoPlayAdapter(
         return videoList.size
     }
 
-    override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
-        holder.bind(videoList[position], position)
-    }
 }
