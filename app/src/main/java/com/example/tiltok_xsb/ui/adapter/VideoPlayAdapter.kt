@@ -29,7 +29,6 @@ import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
     private val viewModel: VideoPlayViewModel,
-    private val onFirstFrameReady: (() -> Unit)? = null,
     private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
@@ -64,16 +63,6 @@ class VideoPlayAdapter(
                     .asBitmap()
                     .load(video.videoRes)
                     .apply(RequestOptions().frame(0))
-                    .listener(object : RequestListener<Bitmap> {
-                        override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean): Boolean {
-                            if (bindingAdapterPosition == position) onFirstFrameReady?.invoke()
-                            return false
-                        }
-                        override fun onResourceReady(resource: Bitmap?, model: Any?, target: Target<Bitmap>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
-                            if (bindingAdapterPosition == position) onFirstFrameReady?.invoke()
-                            return false
-                        }
-                    })
                     .into(binding.ivCover)
 
                 //加载头像
@@ -155,7 +144,6 @@ class VideoPlayAdapter(
                             }
 
                             override fun onPlayerError(error: PlaybackException) {
-                                binding.progressBar.visibility = View.GONE
                                 Toast.makeText(binding.root.context, "播放失败", Toast.LENGTH_SHORT).show()
                             }
                         })
@@ -337,6 +325,11 @@ class VideoPlayAdapter(
             exoPlayer?.pause()
         }
 
+        //隐藏封面
+        fun hideCover() {
+            binding.ivCover.visibility = View.GONE
+        }
+
         //视频资源释放，播放状态重置
         fun release() {
             exoPlayer?.stop()
@@ -446,6 +439,11 @@ class VideoPlayAdapter(
 
         // 播放当前视频
         videoHolders[position]?.play()
+    }
+
+    // 隐藏当前页面的封面
+    fun hideCurrentCover() {
+        videoHolders[currentPlayingPosition]?.hideCover()
     }
 
     //恢复当前视频

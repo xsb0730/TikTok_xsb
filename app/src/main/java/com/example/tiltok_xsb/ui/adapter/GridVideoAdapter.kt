@@ -29,18 +29,18 @@ class GridVideoAdapter(private val context: Context,
 
     //绑定数据到ViewHolder
     override fun onBindViewHolder(holder: GridVideoViewHolder, position: Int) {
-        val video=mList.getOrNull(holder.bindingAdapterPosition) ?: return
+        val video = mList.getOrNull(holder.bindingAdapterPosition) ?: return
 
         with(holder.binding){
             //加载视频封面
-            loadVideoCover(video,holder)
+            loadVideoCover(video, holder)
             //加载作者头像
-            loadAuthorAvatar(video,holder)
+            loadAuthorAvatar(video, holder)
 
             //设置文字信息
-            tvContent.text=video.content
-            ivAuthorName.text=video.userBean?.nickName?:"抖音用户xxx"
-            ivLikeCount.text=formatLikeCount(video.likeCount)
+            tvContent.text = video.content
+            ivAuthorName.text = video.userBean?.nickName ?: "抖音用户xxx"
+            ivLikeCount.text = formatLikeCount(video.likeCount)
 
             // 设置共享元素的 transitionName（每个封面唯一标识）
             ViewCompat.setTransitionName(ivCover, "video_cover_$position")
@@ -89,13 +89,4 @@ class GridVideoAdapter(private val context: Context,
             else -> String.format(Locale.US, "%.1fw", count / 10000.0)
         }
     }
-
-    //更新指定位置的点赞状态
-    fun updateLikeStatus(position: Int, isLiked: Boolean) {
-        mList.getOrNull(position)?.let { video ->
-            video.isLiked = isLiked
-            notifyItemChanged(position)
-        }
-    }
-
 }

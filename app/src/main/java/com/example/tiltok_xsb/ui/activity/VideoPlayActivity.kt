@@ -35,7 +35,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     private var touchHelper: VideoPlayTouchHelper? = null
     private var isRefreshing = false
     private var isLoadingMore = false
-    private var isFirstEnter = true
 
     //companion object直接通过类名来访问startWithTransition方法
     companion object{
@@ -72,7 +71,21 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
             videoList.addAll(it)
         }
 
-        supportPostponeEnterTransition()        // 延迟启动转场动画，等待目标 View 准备好
+        // 延迟转场动画，等待 View 准备好
+        supportPostponeEnterTransition()
+        // 监听转场动画结束
+        window.sharedElementEnterTransition?.addListener(object : android.transition.Transition.TransitionListener {
+            override fun onTransitionEnd(transition: android.transition.Transition?) {
+                // 转场动画结束后，隐藏封面并播放视频
+                videoPlayAdapter?.hideCurrentCover()
+                videoPlayAdapter?.onPageSelected(currentPosition)
+            }
+            override fun onTransitionStart(transition: android.transition.Transition?) {}
+            override fun onTransitionCancel(transition: android.transition.Transition?) {}
+            override fun onTransitionPause(transition: android.transition.Transition?) {}
+            override fun onTransitionResume(transition: android.transition.Transition?) {}
+        })
+        
         setupViewPager()            // 设置 ViewPager2
         setupClickListeners()       // 设置点击事件
         setupTouchHelper()          // 设置触摸手势（下拉刷新/上拉加载）
@@ -86,15 +99,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         videoPlayAdapter = VideoPlayAdapter(
             videoList,
             viewModel,
-            onFirstFrameReady = {
-                if (isFirstEnter) {
-                    isFirstEnter = false
-                    // 切回主线程启动动画
-                    binding.root.post {
-                        supportStartPostponedEnterTransition()
-                    }
-                }
-            },
             onCommentClick = { video, position ->
                 showCommentDialog(video, position)
             }
@@ -104,17 +108,29 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         binding.viewPager.orientation = ViewPager2.ORIENTATION_VERTICAL
         binding.viewPager.offscreenPageLimit = 1
 
-        //定位到点击的视频位置
-        binding.viewPager.setCurrentItem(currentPosition, false)
-
-        // 监听页面切换
+        // 监听用户滑动页面
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
                 currentPosition = position
-                videoPlayAdapter?.onPageSelected(position)
+            }
+            //在滚动状态变化时被调用
+            override fun onPageScrollStateChanged(state: Int) {
+                super.onPageScrollStateChanged(state)
+                // 只有在滑动完全停止后才播放视频
+                if (state == ViewPager2.SCROLL_STATE_IDLE) {
+                    videoPlayAdapter?.onPageSelected(currentPosition)
+                }
             }
         })
+
+        //定位到点击的视频位置
+        binding.viewPager.setCurrentItem(currentPosition, false)
+
+        // 延迟一帧，确保 View 已经布局完成，然后启动转场动画
+        binding.viewPager.post {
+            supportStartPostponedEnterTransition()
+        }
     }
 
     //设置返回按钮点击监听
