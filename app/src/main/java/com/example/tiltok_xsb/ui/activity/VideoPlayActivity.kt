@@ -76,8 +76,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         // 监听转场动画结束
         window.sharedElementEnterTransition?.addListener(object : android.transition.Transition.TransitionListener {
             override fun onTransitionEnd(transition: android.transition.Transition?) {
-                // 转场动画结束后，隐藏封面并播放视频
-                videoPlayAdapter?.hideCurrentCover()
+                // 转场动画结束后，播放视频
                 videoPlayAdapter?.onPageSelected(currentPosition)
             }
             override fun onTransitionStart(transition: android.transition.Transition?) {}
@@ -99,14 +98,22 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         videoPlayAdapter = VideoPlayAdapter(
             videoList,
             viewModel,
-            onCommentClick = { video, position ->
-                showCommentDialog(video, position)
+            onCommentClick = { video, _ ->
+                showCommentDialog(video)
             }
         )
 
         binding.viewPager.adapter = videoPlayAdapter
         binding.viewPager.orientation = ViewPager2.ORIENTATION_VERTICAL
         binding.viewPager.offscreenPageLimit = 1
+
+        //定位到点击的视频位置
+        binding.viewPager.setCurrentItem(currentPosition, false)
+
+        // 延迟一帧，确保 View 已经布局完成，然后启动转场动画
+        binding.viewPager.post {
+            supportStartPostponedEnterTransition()
+        }
 
         // 监听用户滑动页面
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -123,14 +130,6 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
                 }
             }
         })
-
-        //定位到点击的视频位置
-        binding.viewPager.setCurrentItem(currentPosition, false)
-
-        // 延迟一帧，确保 View 已经布局完成，然后启动转场动画
-        binding.viewPager.post {
-            supportStartPostponedEnterTransition()
-        }
     }
 
     //设置返回按钮点击监听
@@ -217,7 +216,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
     }
 
     // 显示评论弹窗
-    private fun showCommentDialog(video: VideoBean, position: Int) {
+    private fun showCommentDialog(video: VideoBean) {
         // 暂停当前视频
         videoPlayAdapter?.pauseCurrentVideo()
 

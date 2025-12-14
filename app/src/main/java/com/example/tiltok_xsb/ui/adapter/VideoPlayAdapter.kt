@@ -19,8 +19,6 @@ import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
 
-
-
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,
     private val viewModel: VideoPlayViewModel,
@@ -29,12 +27,16 @@ class VideoPlayAdapter(
 
     // 保存 RecyclerView 的引用，用于获取 ViewHolder
     private var recyclerView: RecyclerView? = null
+    //当前正在播放的位置
+    private var currentPlayingPosition = -1
 
+    //让 Adapter 持有一个 RecyclerView 的强引用
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         this.recyclerView = recyclerView
     }
 
+    //解绑，防止内存泄漏
     override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
         super.onDetachedFromRecyclerView(recyclerView)
         this.recyclerView = null
@@ -45,14 +47,20 @@ class VideoPlayAdapter(
         return recyclerView?.findViewHolderForAdapterPosition(position) as? VideoViewHolder
     }
 
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
+        val binding = ItemVideoPlayBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return VideoViewHolder(binding)
+    }
+
     override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
         holder.bind(videoList[position], position)
     }
 
-    //当前正在播放的位置
-    private var currentPlayingPosition = -1
-
-    //缓存列表项布局中的所有控件，绑定控件的点击、状态更新等逻辑，将视频数据绑定到布局控件上实现列表项的渲染
+    //绑定控件的点击、状态更新等逻辑，将视频数据绑定到布局控件上实现列表项的渲染
     inner class VideoViewHolder(val binding: ItemVideoPlayBinding) : RecyclerView.ViewHolder(binding.root) {
 
         private var exoPlayer: ExoPlayer? = null
@@ -117,37 +125,14 @@ class VideoPlayAdapter(
 
                         // 绑定到 PlayerView
                         binding.playerView.player = this
+                        startRecordAnimation()
 
-                        // 设置播放监听，当视频准备就绪时，触发回调
+                        // 设置播放监听
                         addListener(object : Player.Listener {
                             override fun onEvents(player: Player, events: Player.Events) {
+                                //监听第一帧渲染
                                 if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
                                     binding.ivCover.visibility = View.GONE
-                                }
-                            }
-
-                            override fun onPlaybackStateChanged(playbackState: Int) {
-                                when (playbackState) {
-                                    Player.STATE_BUFFERING -> {
-                                    }
-                                    Player.STATE_READY -> {
-                                        binding.ivCover.visibility = View.GONE
-                                    }
-                                    Player.STATE_IDLE -> {
-                                    }
-                                    Player.STATE_ENDED -> {
-                                    }
-                                }
-                            }
-
-                            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                                if (isPlaying) {
-                                    startRecordAnimation()
-                                    hidePauseIcon()
-                                    binding.ivCover.visibility = View.GONE
-                                } else {
-                                    pauseRecordAnimation()
-                                    showPauseIcon()
                                 }
                             }
 
@@ -271,8 +256,12 @@ class VideoPlayAdapter(
         private fun togglePlayPause() {
             exoPlayer?.let {
                 if (it.isPlaying) {
+                    showPauseIcon()
+                    pauseRecordAnimation()
                     it.pause()
                 } else {
+                    hidePauseIcon()
+                    startRecordAnimation()
                     it.play()
                 }
             }
@@ -305,37 +294,30 @@ class VideoPlayAdapter(
         fun play() {
             if (exoPlayer == null) return
 
+            hidePauseIcon()
+            startRecordAnimation()
+
             exoPlayer?.let { player ->
                 when (player.playbackState) {
                     Player.STATE_IDLE -> {
                         player.prepare()
                     }
-
+                    Player.STATE_BUFFERING -> {
+                    }
+                    Player.STATE_READY -> {
+                    }
                     Player.STATE_ENDED -> {
                         player.seekTo(0)
                     }
-
-                    Player.STATE_BUFFERING -> {
-
-                    }
-
-                    Player.STATE_READY -> {
-
-                    }
                 }
-
                 player.play()
             }
         }
 
         //暂停
         fun pause() {
+            pauseRecordAnimation()
             exoPlayer?.pause()
-        }
-
-        //隐藏封面
-        fun hideCover() {
-            binding.ivCover.visibility = View.GONE
         }
 
         //视频资源释放，播放状态重置
@@ -423,6 +405,19 @@ class VideoPlayAdapter(
         }
     }
 
+    // 页面切换时，暂停当前视频，播放新视频
+    fun onPageSelected(position: Int) {
+        // 暂停之前的视频
+        if (currentPlayingPosition != -1 && currentPlayingPosition != position) {
+            getViewHolderAtPosition(currentPlayingPosition)?.pause()
+        }
+
+        currentPlayingPosition = position
+
+        // 播放当前视频
+        getViewHolderAtPosition(position)?.play()
+    }
+
     //更新列表中指定位置视频的点赞状态
     fun updateLikeStatus(position: Int, isLiked: Boolean) {
         getViewHolderAtPosition(position)?.updateLikeState(isLiked)
@@ -444,23 +439,6 @@ class VideoPlayAdapter(
             videoList[position].commentCount = newCount
             getViewHolderAtPosition(position)?.updateCommentCount(newCount)
         }
-    }
-
-    fun onPageSelected(position: Int) {
-        // 暂停之前的视频
-        if (currentPlayingPosition != -1 && currentPlayingPosition != position) {
-            getViewHolderAtPosition(currentPlayingPosition)?.pause()
-        }
-
-        currentPlayingPosition = position
-
-        // 播放当前视频
-        getViewHolderAtPosition(position)?.play()
-    }
-
-    // 隐藏当前页面的封面
-    fun hideCurrentCover() {
-        getViewHolderAtPosition(currentPlayingPosition)?.hideCover()
     }
 
     //恢复当前视频
@@ -500,15 +478,6 @@ class VideoPlayAdapter(
     override fun onViewRecycled(holder: VideoViewHolder) {
         super.onViewRecycled(holder)
         holder.release()
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
-        val binding = ItemVideoPlayBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return VideoViewHolder(binding)
     }
 
     override fun getItemCount(): Int {
