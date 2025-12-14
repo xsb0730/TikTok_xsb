@@ -2,7 +2,6 @@ package com.example.tiltok_xsb.ui.adapter
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,11 +14,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tiltok_xsb.databinding.ItemVideoPlayBinding
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
@@ -32,14 +27,30 @@ class VideoPlayAdapter(
     private val onCommentClick: ((VideoBean, Int) -> Unit)? = null
 ):RecyclerView.Adapter<VideoPlayAdapter.VideoViewHolder>() {
 
+    // 保存 RecyclerView 的引用，用于获取 ViewHolder
+    private var recyclerView: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        this.recyclerView = recyclerView
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        this.recyclerView = null
+    }
+
+    // 获取指定位置的 ViewHolder
+    private fun getViewHolderAtPosition(position: Int): VideoViewHolder? {
+        return recyclerView?.findViewHolderForAdapterPosition(position) as? VideoViewHolder
+    }
+
     override fun onBindViewHolder(holder: VideoViewHolder, position: Int) {
         holder.bind(videoList[position], position)
     }
 
     //当前正在播放的位置
     private var currentPlayingPosition = -1
-    //缓存 VideoViewHolder
-    private val videoHolders = mutableMapOf<Int, VideoViewHolder>()
 
     //缓存列表项布局中的所有控件，绑定控件的点击、状态更新等逻辑，将视频数据绑定到布局控件上实现列表项的渲染
     inner class VideoViewHolder(val binding: ItemVideoPlayBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -90,9 +101,6 @@ class VideoPlayAdapter(
                 setupExoPlayer(video)                       // 设置 ExoPlayer视频播放器
                 setupLikeAnimationView(video, position)     // 设置双击点赞动画/单机暂停监听
             }
-
-            //保存ViewHolder
-            videoHolders[position] = this
         }
 
         // 设置 ExoPlayer
@@ -332,11 +340,20 @@ class VideoPlayAdapter(
 
         //视频资源释放，播放状态重置
         fun release() {
+            // 先暂停并停止解码
             exoPlayer?.stop()
+            
+            // 显式断开与 Surface 的连接
+            exoPlayer?.clearVideoSurface()
+            
+            // 清空媒体项
             exoPlayer?.clearMediaItems()
+            
+            // 彻底释放播放器
             exoPlayer?.release()
             exoPlayer = null
 
+            // 停止动画和重置 UI
             stopRecordAnimation()
             binding.ivPause.visibility = View.GONE
             binding.progressBar.visibility = View.GONE
@@ -408,63 +425,81 @@ class VideoPlayAdapter(
 
     //更新列表中指定位置视频的点赞状态
     fun updateLikeStatus(position: Int, isLiked: Boolean) {
-        videoHolders[position]?.updateLikeState(isLiked)
+        getViewHolderAtPosition(position)?.updateLikeState(isLiked)
     }
 
     //更新列表中指定位置视频的收藏状态
     fun updateCollectStatus(position: Int, isCollected: Boolean) {
-        videoHolders[position]?.updateCollectState(isCollected)
+        getViewHolderAtPosition(position)?.updateCollectState(isCollected)
     }
 
     //更新列表中指定位置视频的关注状态
     fun updateFollowStatus(position: Int, isFollowed: Boolean) {
-        videoHolders[position]?.updateFollowState(isFollowed)
+        getViewHolderAtPosition(position)?.updateFollowState(isFollowed)
     }
 
     //更新指定位置视频的评论数
     fun updateCommentCount(position: Int, newCount: Int) {
         if (position in videoList.indices) {
             videoList[position].commentCount = newCount
-            videoHolders[position]?.updateCommentCount(newCount)
+            getViewHolderAtPosition(position)?.updateCommentCount(newCount)
         }
     }
 
     fun onPageSelected(position: Int) {
         // 暂停之前的视频
         if (currentPlayingPosition != -1 && currentPlayingPosition != position) {
-            videoHolders[currentPlayingPosition]?.pause()
+            getViewHolderAtPosition(currentPlayingPosition)?.pause()
         }
 
         currentPlayingPosition = position
 
         // 播放当前视频
-        videoHolders[position]?.play()
+        getViewHolderAtPosition(position)?.play()
     }
 
     // 隐藏当前页面的封面
     fun hideCurrentCover() {
-        videoHolders[currentPlayingPosition]?.hideCover()
+        getViewHolderAtPosition(currentPlayingPosition)?.hideCover()
     }
 
     //恢复当前视频
     fun resumeCurrentVideo() {
         if (currentPlayingPosition != -1) {
-            videoHolders[currentPlayingPosition]?.play()
+            getViewHolderAtPosition(currentPlayingPosition)?.play()
         }
     }
 
     //暂停当前视频
     fun pauseCurrentVideo() {
         if (currentPlayingPosition != -1) {
-            videoHolders[currentPlayingPosition]?.pause()
+            getViewHolderAtPosition(currentPlayingPosition)?.pause()
         }
     }
 
     //释放所有视频资源
     fun releaseAllVideos() {
-        videoHolders.values.forEach { it.release() }
-        videoHolders.clear()
-        currentPlayingPosition = -1  // 重置播放位置
+        // 释放当前正在播放的视频
+        if (currentPlayingPosition != -1) {
+            getViewHolderAtPosition(currentPlayingPosition)?.release()
+        }
+        
+        // 释放前后预加载的 ViewHolder
+        if (currentPlayingPosition > 0) {
+            getViewHolderAtPosition(currentPlayingPosition - 1)?.release()
+        }
+        if (currentPlayingPosition < itemCount - 1) {
+            getViewHolderAtPosition(currentPlayingPosition + 1)?.release()
+        }
+        
+        currentPlayingPosition = -1
+        recyclerView = null
+    }
+
+    // ViewHolder 被回收时释放资源
+    override fun onViewRecycled(holder: VideoViewHolder) {
+        super.onViewRecycled(holder)
+        holder.release()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
