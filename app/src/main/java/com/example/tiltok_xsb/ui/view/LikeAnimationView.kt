@@ -73,8 +73,8 @@ class LikeAnimationView @JvmOverloads constructor(
         addView(imageView)
 
         val layoutParams = LayoutParams(likeViewSize, likeViewSize)
-        layoutParams.leftMargin = e.x.toInt() - likeViewSize / 2
-        layoutParams.topMargin = e.y.toInt() - likeViewSize
+        layoutParams.leftMargin = e.x.toInt() - likeViewSize / 2        // e.x 是手指点击的横坐标
+        layoutParams.topMargin = e.y.toInt() - likeViewSize             // e.y 是手指点击的纵坐标
         imageView.layoutParams = layoutParams
 
         playAnim(imageView)
@@ -82,20 +82,21 @@ class LikeAnimationView @JvmOverloads constructor(
 
     //播放爱心动画
     private fun playAnim(view: View) {
-        val animationSet = AnimationSet(true)
-        val degrees = angles[Random.nextInt(3)]
+        val animationSet = AnimationSet(true)          //容器
+        val degrees = angles[Random.nextInt(3)]                  //随机歪头
 
         // 添加动画效果
-        animationSet.addAnimation(AnimUtils.rotateAnim(0, 0, degrees.toFloat()))
-        animationSet.addAnimation(AnimUtils.scaleAnim(100, 2f, 1f, 0))
-        animationSet.addAnimation(AnimUtils.alphaAnim(0f, 1f, 100, 0))
-        animationSet.addAnimation(AnimUtils.scaleAnim(500, 1f, 1.8f, 300))
-        animationSet.addAnimation(AnimUtils.alphaAnim(1f, 0f, 500, 300))
-        animationSet.addAnimation(AnimUtils.translationAnim(500, 0f, 0f, 0f, -400f, 300))
+        animationSet.addAnimation(AnimUtils.rotateAnim(0, 0, degrees.toFloat()))                                     //旋转
+        animationSet.addAnimation(AnimUtils.scaleAnim(100, 2f, 1f, 0))                                        //缩放
+        animationSet.addAnimation(AnimUtils.alphaAnim(0f, 1f, 100, 0))                             //透明度
+        animationSet.addAnimation(AnimUtils.scaleAnim(500, 1f, 1.8f, 300))                                    //缩放
+        animationSet.addAnimation(AnimUtils.alphaAnim(1f, 0f, 500, 300))                           //透明度
+        animationSet.addAnimation(AnimUtils.translationAnim(500, 0f, 0f, 0f, -400f, 300))        //位移
 
         animationSet.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(animation: Animation) {}
 
+            //把 View 从内存和布局里删掉
             override fun onAnimationEnd(animation: Animation) {
                 Handler(Looper.getMainLooper()).post {
                     removeView(view)

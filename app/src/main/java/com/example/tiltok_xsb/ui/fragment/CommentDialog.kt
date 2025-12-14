@@ -41,6 +41,7 @@ class CommentDialog(
         super.onCreate(savedInstanceState)
 
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
+
         binding = DialogCommentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

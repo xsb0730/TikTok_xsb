@@ -28,34 +28,14 @@ class CommentAdapter(
 
     //将评论数据绑定到 ViewHolder
     override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
-        holder.bind(commentList[position], position)
+        holder.bind(commentList[position])
     }
-
-    //返回评论列表的大小
-    override fun getItemCount(): Int {
-        return commentList.size
-    }
-
-    //更新评论列表
-    @SuppressLint("NotifyDataSetChanged")
-    fun submitList(newList: List<CommentBean>?) {
-
-        commentList.clear()
-        if (newList != null) {
-            commentList.addAll(newList)
-        }
-
-        // 通知 RecyclerView 数据已更新
-        notifyDataSetChanged()
-
-    }
-
 
     //缓存视图控件、绑定评论数据
     inner class CommentViewHolder(val binding: ItemCommentBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(comment: CommentBean, position: Int) {
+        fun bind(comment: CommentBean) {
             with(binding) {
                 // 加载头像
                 Glide.with(ivHead.context)
@@ -71,11 +51,7 @@ class CommentAdapter(
                 tvLikecount.text = formatCount(comment.likeCount)
 
                 // 设置点赞图标颜色
-                val likeIconView = binding.root.findViewById<com.example.tiltok_xsb.ui.view.IconFontTextView>(
-                    R.id.ll_like  // item_comment.xml 中的 ID
-                )
-
-                likeIconView?.setTextColor(
+                llLike.setTextColor(
                     if (comment.isLiked) {
                         root.context.getColor(R.color.red)
                     } else {
@@ -83,10 +59,11 @@ class CommentAdapter(
                     }
                 )
 
-                // 点击整个评论 Item
-                root.setOnClickListener {
+                // 点击点赞图标
+                llLike.setOnClickListener {
                     val currentPosition = bindingAdapterPosition
                     if (currentPosition != RecyclerView.NO_POSITION) {
+                        // 触发回调
                         onLikeClick(comment, currentPosition)
                     }
                 }
@@ -101,5 +78,22 @@ class CommentAdapter(
                 else -> count.toString()
             }
         }
+    }
+
+    //返回评论列表的大小
+    override fun getItemCount(): Int {
+        return commentList.size
+    }
+
+    //更新评论列表
+    @SuppressLint("NotifyDataSetChanged")
+    fun submitList(newList: List<CommentBean>?) {
+        commentList.clear()
+        if (newList != null) {
+            commentList.addAll(newList)
+        }
+
+        // 通知 RecyclerView 数据已更新
+        notifyDataSetChanged()
     }
 }

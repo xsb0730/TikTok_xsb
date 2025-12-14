@@ -347,7 +347,7 @@ class VideoPlayAdapter(
             if (recordAnimator == null) {
                 recordAnimator = ObjectAnimator.ofFloat(
                     binding.rlRecord,                    // 目标 View：唱片容器
-                    "rotation",             // 动画属性：旋转角度
+                    "rotation",             // 旋转
                     0f,                          // 起始角度：0°
                     360f                                 // 结束角度：360°（完整一圈）
                 ).apply {
@@ -393,6 +393,7 @@ class VideoPlayAdapter(
         fun updateCommentCount(count: Int) {
             currentVideo.commentCount = count
             binding.tvCommentcount.text = formatCount(count)
+            updateUIState(currentVideo)
         }
 
         //格式化数字
