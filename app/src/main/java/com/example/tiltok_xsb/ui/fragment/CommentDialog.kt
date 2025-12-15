@@ -31,6 +31,7 @@ class CommentDialog(
     private val viewModelStoreOwner: ViewModelStoreOwner
 ) :BottomSheetDialog(context, R.style.BottomSheetDialogTheme), LifecycleOwner{
 
+    //生命周期注册表
     private val lifecycleRegistry = LifecycleRegistry(this)
     private lateinit var binding: DialogCommentBinding
     private lateinit var viewModel: CommentViewModel
@@ -45,7 +46,7 @@ class CommentDialog(
         binding = DialogCommentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 从传入的 ViewModelStoreOwner 获取 ViewModel（与 Activity 共享）
+        // 复用/共享 Activity 的 ViewModel,防止数据丢失
         viewModel = ViewModelProvider(
             viewModelStoreOwner,
             ViewModelProvider.AndroidViewModelFactory.getInstance(
@@ -59,14 +60,13 @@ class CommentDialog(
         setupInputArea()
         observeViewModel()
 
-
         // 加载评论列表
         viewModel.loadComments(videoId)
     }
 
     //配置弹窗样式
     private fun setupDialog() {
-        // 设置宽度为屏幕宽度，高度自适应
+        // 设置撑满全屏
         window?.apply {
             setLayout(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -75,15 +75,14 @@ class CommentDialog(
 
             // 从底部弹出
             setGravity(Gravity.BOTTOM)
-            // 背景透明（避免白色边框）
+            // 背景透明
             setBackgroundDrawableResource(android.R.color.transparent)
 
             // 让内容延伸到系统栏下方
             WindowCompat.setDecorFitsSystemWindows(this, false)
 
-            // 设置导航栏透明
+            // 设置“白色的按钮”
             WindowCompat.getInsetsController(this, decorView).apply {
-                // 设置导航栏为浅色模式（可选）
                 isAppearanceLightNavigationBars = false
             }
         }
@@ -102,33 +101,24 @@ class CommentDialog(
     // 处理软键盘插入
     private fun setupWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
-            // 获取系统栏和键盘的 insets
+            // 获取底部导航栏的高度
             val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // 获取软键盘的高度
             val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
 
-            // 使用最大值（键盘弹出时用键盘高度，否则用导航栏高度）
+            // 使用最大值
             val bottomInset = maxOf(systemBarsInsets.bottom, imeInsets.bottom)
 
-            // 动态设置输入框底部内边距
+            // 给输入框加底部内边距
             binding.layoutInput.updatePadding(bottom = bottomInset)
 
-            // 键盘弹出时，自动滚动到底部
-            if (imeInsets.bottom > 0) {
-                binding.recyclerView.postDelayed({
-                    val itemCount = adapter?.itemCount ?: 0
-                    if (itemCount > 0) {
-                        binding.recyclerView.smoothScrollToPosition(itemCount - 1)
-                    }
-                }, 100)
-            }
-
+            // 拦截回执
             WindowInsetsCompat.CONSUMED
         }
     }
 
     //设置评论列表
     private fun setupRecyclerView() {
-
         adapter = CommentAdapter(
             // 点赞回调函数
             onLikeClick = { comment, position ->
@@ -147,23 +137,8 @@ class CommentDialog(
     //设置输入框
     private fun setupInputArea() {
         with(binding) {
-
             // 设置输入框提示文字
             etInput.setHint(R.string.comment_input_hint)
-
-            // 输入框获得焦点时，自动滚动到底部
-            etInput.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    // 延迟执行，等待软键盘弹出
-                    etInput.postDelayed({
-                        // 如果有评论，滚动到最后一条
-                        val itemCount = adapter?.itemCount ?: 0
-                        if (itemCount > 0) {
-                            recyclerView.smoothScrollToPosition(itemCount - 1)
-                        }
-                    }, 200)
-                }
-            }
 
             // 发送按钮点击
             tvSend.setOnClickListener {

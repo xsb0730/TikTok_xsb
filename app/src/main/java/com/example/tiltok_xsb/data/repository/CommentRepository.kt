@@ -8,7 +8,6 @@ import com.example.tiltok_xsb.data.database.CommentEntity
 import com.example.tiltok_xsb.data.model.CommentBean
 import com.example.tiltok_xsb.data.model.UserBean
 import com.google.gson.Gson
-import kotlinx.coroutines.delay
 
 class CommentRepository(context: Context) {
 
@@ -18,8 +17,6 @@ class CommentRepository(context: Context) {
     // 获取评论列表（优先从数据库加载）
     suspend fun getCommentList(videoId: Int): Result<List<CommentBean>> {
         return try {
-            delay(300)  // 模拟网络延迟
-
             // 从数据库读取
             val localComments = commentDao.getCommentsByVideoId(videoId)
 
@@ -45,8 +42,6 @@ class CommentRepository(context: Context) {
     // 发布评论（保存到数据库）
     suspend fun publishComment(videoId: Int, content: String): Result<CommentBean> {
         return try {
-            delay(800)
-
             // 创建评论对象
             val currentUser = UserBean(
                 userId = 9999,
@@ -56,7 +51,7 @@ class CommentRepository(context: Context) {
             )
 
             val newComment = CommentBean(
-                commentId = System.currentTimeMillis().toInt(),
+                commentId = System.currentTimeMillis().toInt(),     //获取当前系统时间并强制转成 Int 类型
                 videoId = videoId,
                 userBean = currentUser,
                 content = content,
@@ -77,8 +72,6 @@ class CommentRepository(context: Context) {
     // 切换点赞状态（同步到数据库）
     suspend fun toggleCommentLike(comment: CommentBean): Result<Boolean> {
         return try {
-            delay(200)
-
             val newLikedState = !comment.isLiked
             val newLikeCount = if (newLikedState) {
                 comment.likeCount + 1

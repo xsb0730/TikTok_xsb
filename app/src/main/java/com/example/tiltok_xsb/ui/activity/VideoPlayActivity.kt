@@ -86,7 +86,7 @@ class VideoPlayActivity:BaseBindingActivity<ActivityVideoPlayBinding>({ActivityV
         })
         
         setupViewPager()            // 设置 ViewPager2
-        setupClickListeners()       // 设置点击事件
+        setupClickListeners()       // 设置返回点击事件
         setupTouchHelper()          // 设置触摸手势（下拉刷新/上拉加载）
         observeViewModel()          // 观察数据变化
         observeCommentViewModel()   // 观察评论数变化
