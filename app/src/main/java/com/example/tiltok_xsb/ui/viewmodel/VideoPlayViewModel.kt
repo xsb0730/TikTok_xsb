@@ -72,7 +72,6 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
                 if (videos.isNotEmpty()) {
                     syncCommentCounts(videos)
                     _loadMoreResult.value = Resource.Success(videos)
-
                 } else {
                     _loadMoreResult.value = Resource.Error("没有更多数据了")
                 }
@@ -85,17 +84,13 @@ class VideoPlayViewModel(application: Application): AndroidViewModel(application
     // 同步视频列表的评论数
     private suspend fun syncCommentCounts(videos: List<VideoBean>) {
         try {
+            //把视频列表里的每个视频对象，转换成只有 ID 的列表
             val videoIds = videos.map { it.videoId }
             val commentCounts = commentRepository.getCommentCountsForVideos(videoIds)
 
             videos.forEach { video ->
                 video.commentCount = commentCounts[video.videoId] ?: 0
             }
-
-            android.util.Log.d(
-                "VideoPlayViewModel",
-                "同步评论数完成: ${commentCounts.map { "${it.key}=${it.value}" }}"
-            )
         } catch (e: Exception) {
             android.util.Log.e("VideoPlayViewModel", "同步评论数失败: ${e.message}")
         }

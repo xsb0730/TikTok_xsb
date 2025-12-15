@@ -110,7 +110,6 @@ class CommentRepository(context: Context) {
 
     }
 
-
     // CommentBean → CommentEntity
     private fun CommentBean.toEntity(): CommentEntity {
         return CommentEntity(

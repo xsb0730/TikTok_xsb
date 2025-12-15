@@ -34,6 +34,7 @@ class VideoPlayTouchHelper(
 
     fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
+            //手指刚触碰屏幕时，记录起始位置
             MotionEvent.ACTION_DOWN -> {
                 startY = event.y
                 startX = event.x
@@ -43,6 +44,7 @@ class VideoPlayTouchHelper(
                 currentDragDistance = 0f
             }
 
+            //感知意图
             MotionEvent.ACTION_MOVE -> {
                 val deltaY = event.y - startY
                 val deltaX = event.x - startX
@@ -72,15 +74,14 @@ class VideoPlayTouchHelper(
                     // 上拉加载更多（在最后一个视频且向上拉）
                     val adapter = viewPager.adapter
                     val itemCount = adapter?.itemCount ?: 0
-
                     if (itemCount > 0 && currentPosition == itemCount - 1 && deltaY < 0) {
                         isPullingUp = true
                         // 不拦截事件，让 ViewPager2 正常滑动
-                        // return false 表示不拦截
                     }
                 }
             }
 
+            //执行命令
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (isDragging) {
                     val currentPosition = viewPager.currentItem
@@ -100,17 +101,14 @@ class VideoPlayTouchHelper(
                     return true
                 }
 
-                // 触发加载更多（不需要拖拽距离判断）
+                // 触发加载更多
                 if (isPullingUp) {
                     val currentPosition = viewPager.currentItem
                     val adapter = viewPager.adapter
                     val itemCount = adapter?.itemCount ?: 0
 
                     // 在最后一个视频且未重复触发
-                    if (itemCount > 0 &&
-                        currentPosition == itemCount - 1 &&
-                        lastLoadMorePosition != currentPosition) {
-
+                    if (itemCount > 0 && currentPosition == itemCount - 1 && lastLoadMorePosition != currentPosition) {
                         lastLoadMorePosition = currentPosition
                         onLoadMore()
                     }
@@ -123,7 +121,7 @@ class VideoPlayTouchHelper(
         return false
     }
 
-    // 计算拖拽距离
+    // 计算拖拽距离带有阻尼效果
     private fun calculateDragDistance(rawDistance: Float): Float {
         return if (rawDistance <= maxDragDistance) {
             rawDistance
@@ -147,6 +145,7 @@ class VideoPlayTouchHelper(
     // 开始刷新图标持续旋转动画
     private fun startRefreshIconAnimation() {
         refreshIcon?.let { icon ->
+            //清理异常残留
             refreshIconAnimator?.cancel()
             refreshIconAnimator = ObjectAnimator.ofFloat(
                 icon,
@@ -154,9 +153,9 @@ class VideoPlayTouchHelper(
                 icon.rotation,
                 icon.rotation + 360f
             ).apply {
-                duration = 1000
-                repeatCount = ObjectAnimator.INFINITE
-                interpolator = LinearInterpolator()
+                duration = 1000                              //持续时间
+                repeatCount = ObjectAnimator.INFINITE        //无限循环
+                interpolator = LinearInterpolator()          //匀速
                 start()
             }
         }
