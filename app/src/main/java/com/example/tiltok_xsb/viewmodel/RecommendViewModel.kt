@@ -1,4 +1,4 @@
-package com.example.tiltok_xsb.ui.viewmodel
+package com.example.tiltok_xsb.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

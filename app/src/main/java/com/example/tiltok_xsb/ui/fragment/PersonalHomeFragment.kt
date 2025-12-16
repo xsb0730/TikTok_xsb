@@ -18,13 +18,13 @@ import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.base.BaseBindingFragment
 import com.example.tiltok_xsb.databinding.FragmentPersonalHomeBinding
 import com.example.tiltok_xsb.ui.adapter.PersonalHomePagerAdapter
-import com.example.tiltok_xsb.utils.AvatarChooseDialog
-import com.example.tiltok_xsb.ui.viewmodel.PersonalHomeViewModel
+import com.example.tiltok_xsb.viewmodel.PersonalHomeViewModel
 import com.example.tiltok_xsb.utils.ImageUtils
 import com.example.tiltok_xsb.utils.Resource
 import com.google.android.material.tabs.TabLayoutMediator
 import com.yalantis.ucrop.UCrop
 import java.io.File
+import java.util.Locale
 
 
 class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ FragmentPersonalHomeBinding.inflate(it) }) {
@@ -32,6 +32,17 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
 
     //临时存储拍照后的照片 URI
     private var tempPhotoUri: Uri? = null
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
+        setupToolbar()              //设置返回按钮和更多按钮
+        setupAvatarClick()          //设置头像点击事件
+        setupViewPager()            //设置 ViewPager 和 TabLayout
+        observeViewModel()          //观察 ViewModel 数据变化
+        viewModel.loadUserInfo()    // 加载个人主页用户数据
+    }
 
     // 相机权限请求
     private val cameraPermissionLauncher = registerForActivityResult(
@@ -55,7 +66,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         }
     }
 
-    // 拍照结果
+    // 拍照结果发射器
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
@@ -66,7 +77,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         }
     }
 
-    // 图库选择结果
+    // 图片选择结果发射器
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     )  { uri ->
@@ -77,7 +88,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         }
     }
 
-    // 裁剪结果
+    // 裁剪结果发射器
     private val cropImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -98,17 +109,6 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
                 android.util.Log.d("PersonalHome", "用户取消裁剪")
             }
         }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-
-        setupToolbar()              //设置返回按钮和更多按钮
-        setupAvatarClick()          //设置头像点击事件
-        setupViewPager()            //设置 ViewPager 和 TabLayout
-        observeViewModel()          //观察 ViewModel 数据变化
-        viewModel.loadUserInfo()    // 加载个人主页用户数据
     }
 
     // 设置 ViewPager 和 TabLayout
@@ -140,20 +140,16 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         // 观察头像上传状态
         viewModel.avatarUploadStatus.observe(viewLifecycleOwner) { resource ->
             when (resource) {
-                is Resource.Loading -> {
-                    showToast("正在上传头像...")
+                is Resource.Loading -> {}
+                is Resource.Success -> {
+                    showToast("头像上传成功")
                 }
-                is Resource.Success -> {}
                 is Resource.Error -> {
                     showToast(resource.message ?: "上传失败")
                 }
             }
         }
 
-        // 观察 Toast 消息
-        viewModel.toastMessage.observe(viewLifecycleOwner) { message ->
-            showToast(message)
-        }
     }
 
     // 更新 UI
@@ -164,9 +160,9 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
             // 个性签名
             tvSign.text = userInfo.signature
             // 统计数据
-            tvGetLikeCount.text = viewModel.formatCount(userInfo.likesCount)
-            tvFocusCount.text = viewModel.formatCount(userInfo.followingCount)
-            tvFansCount.text = viewModel.formatCount(userInfo.fansCount)
+            tvGetLikeCount.text = formatCount(userInfo.likesCount)
+            tvFocusCount.text = formatCount(userInfo.followingCount)
+            tvFansCount.text = formatCount(userInfo.fansCount)
 
             // 加载头像
             Glide.with(requireContext())
@@ -184,6 +180,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
             .into(binding.ivBg)
     }
 
+    // 返回点击事件
     private fun setupToolbar() {
         binding.ivReturn.setOnClickListener {
             parentFragmentManager.popBackStack()
@@ -197,7 +194,6 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 设置头像点击事件
     private fun setupAvatarClick() {
         binding.homeHeader.ivHead.setOnClickListener {
-            android.util.Log.d("PersonalHome", "点击头像，显示选择对话框")
             showAvatarChooseDialog()
         }
     }
@@ -205,6 +201,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 显示头像选择对话框
     private fun showAvatarChooseDialog() {
         val dialog = AvatarChooseDialog()
+
         dialog.setOnChooseListener(object : AvatarChooseDialog.OnChooseListener {
             override fun onCamera() {
                 checkCameraPermission()
@@ -233,6 +230,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
 
     // 检查存储权限
     private fun checkStoragePermission() {
+        //应对系统版本差异而写的 “动态权限适配”
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
         } else {
@@ -254,6 +252,7 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 打开相册
     private fun openGallery() {
         try {
+            //启动之前注册好的图片选择器
             pickImageLauncher.launch("image/*")
         } catch (e: Exception) {
             e.printStackTrace()
@@ -264,11 +263,13 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
     // 打开相机
     private fun openCamera() {
         try {
+            //创建临时图片文件
             val photoFile = ImageUtils.createTempImageFile(requireContext())
 
+            //把一个私有文件路径 (File)，转换成了一个可共享的资源地址 (Uri)
             tempPhotoUri = FileProvider.getUriForFile(
                 requireContext(),
-                "${requireContext().packageName}.fileprovider",
+                "${requireContext().packageName}.FileProvider",
                 photoFile
             )
 
@@ -310,6 +311,15 @@ class PersonalHomeFragment : BaseBindingFragment<FragmentPersonalHomeBinding>({ 
         } catch (e: Exception) {
             e.printStackTrace()
             showToast("启动裁剪失败: ${e.message}")
+        }
+    }
+
+    //格式化数字
+    private fun formatCount(count: Int): String {
+        return when {
+            count >= 10000 -> String.format(Locale.US,"%.1fw", count / 10000.0)
+            count >= 1000 -> String.format(Locale.US,"%.1fk", count / 1000.0)
+            else -> count.toString()
         }
     }
 

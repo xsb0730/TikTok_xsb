@@ -1,4 +1,4 @@
-package com.example.tiltok_xsb.ui.viewmodel
+package com.example.tiltok_xsb.viewmodel
 
 import android.app.Application
 import android.net.Uri
@@ -23,10 +23,6 @@ class PersonalHomeViewModel(application: Application) : AndroidViewModel(applica
     // 头像上传状态
     private val _avatarUploadStatus = MutableLiveData<Resource<String>>()
     val avatarUploadStatus: LiveData<Resource<String>> = _avatarUploadStatus
-
-    // Toast 消息
-    private val _toastMessage = MutableLiveData<String>()
-    val toastMessage: LiveData<String> = _toastMessage
 
     //加载用户信息
     fun loadUserInfo(userId: String = "123456") {
@@ -63,23 +59,11 @@ class PersonalHomeViewModel(application: Application) : AndroidViewModel(applica
                     )
                 }
 
-                _toastMessage.value = "头像更新成功"
             } else {
                 _avatarUploadStatus.value = Resource.Error(
                     result.exceptionOrNull()?.message ?: "头像上传失败"
                 )
-                _toastMessage.value = "头像上传失败"
             }
-        }
-    }
-
-
-     //格式化数字
-    fun formatCount(count: Int): String {
-        return when {
-            count >= 10000 -> String.format(Locale.US,"%.1fw", count / 10000.0)
-            count >= 1000 -> String.format(Locale.US,"%.1fk", count / 1000.0)
-            else -> count.toString()
         }
     }
 }

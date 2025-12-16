@@ -1,4 +1,4 @@
-package com.example.tiltok_xsb.utils
+package com.example.tiltok_xsb.ui.fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -32,12 +32,14 @@ class AvatarChooseDialog : BottomSheetDialogFragment() {
         return binding.root
     }
 
+    // 视图创建，绑定按钮点击事件
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         // 拍照按钮
         binding.tvCamera.setOnClickListener {
             listener?.onCamera()
+            //关掉弹窗
             dismiss()
         }
 

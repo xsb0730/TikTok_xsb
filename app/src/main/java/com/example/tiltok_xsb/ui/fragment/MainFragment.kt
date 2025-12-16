@@ -144,13 +144,13 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
 
         parentFragmentManager.beginTransaction()
             .setCustomAnimations(
-                R.anim.slide_in_right,    // 从右侧滑入
-                R.anim.slide_out_left,    // 向左侧滑出
-                R.anim.slide_in_left,     // 返回时从左侧滑入
-                R.anim.slide_out_right    // 返回时向右侧滑出
+                R.anim.slide_in_right,    // 新页面从右侧到左侧滑入
+                R.anim.slide_out_left,    // 旧页面向左侧到右侧滑出
+                R.anim.slide_in_left,     // 返回时，旧页面从左边滑回来
+                R.anim.slide_out_right    // 返回时，新页面向右边滑出去
             )
             .replace(android.R.id.content, personalHomeFragment)
-            .addToBackStack(null)
+            .addToBackStack(null)           // 加入回退栈
             .commit()
 
         val listener = object : FragmentManager.OnBackStackChangedListener {
@@ -159,7 +159,6 @@ class MainFragment: BaseBindingFragment<FragmentMainBinding>({FragmentMainBindin
                 if (parentFragmentManager.backStackEntryCount == 0) {
                     // 恢复底部导航栏到"首页"
                     binding.tabMainMenu.getTabAt(0)?.select()
-
                     // 移除监听器（避免重复触发）
                     parentFragmentManager.removeOnBackStackChangedListener(this)
                 }

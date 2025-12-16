@@ -14,13 +14,13 @@ import com.example.tiltok_xsb.databinding.FragmentRecommendBinding
 import com.example.tiltok_xsb.databinding.ItemGridVideoBinding
 import com.example.tiltok_xsb.ui.activity.VideoPlayActivity
 import com.example.tiltok_xsb.ui.adapter.GridVideoAdapter
-import com.example.tiltok_xsb.ui.viewmodel.RecommendViewModel
+import com.example.tiltok_xsb.viewmodel.RecommendViewModel
 import com.example.tiltok_xsb.utils.Resource
 
 class RecommendFragment : BaseBindingFragment<FragmentRecommendBinding>({FragmentRecommendBinding.inflate(it)}), IScrollToTop {
 
     //懒加载创建和获取 ViewModel 实例
-    private val viewModel:RecommendViewModel by viewModels()
+    private val viewModel: RecommendViewModel by viewModels()
     //双列列表适配器
     private var adapter:GridVideoAdapter? = null
     //是否正在加载

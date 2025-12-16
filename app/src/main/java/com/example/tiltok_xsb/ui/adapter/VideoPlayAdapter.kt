@@ -17,7 +17,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.data.model.VideoBean
-import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
+import com.example.tiltok_xsb.viewmodel.VideoPlayViewModel
 
 class VideoPlayAdapter(
     private val videoList:List<VideoBean>,

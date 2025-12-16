@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tiltok_xsb.R
 import com.example.tiltok_xsb.databinding.DialogCommentBinding
 import com.example.tiltok_xsb.ui.adapter.CommentAdapter
-import com.example.tiltok_xsb.ui.viewmodel.CommentViewModel
+import com.example.tiltok_xsb.viewmodel.CommentViewModel
 import com.example.tiltok_xsb.utils.Resource
 import com.google.android.material.bottomsheet.BottomSheetDialog
 

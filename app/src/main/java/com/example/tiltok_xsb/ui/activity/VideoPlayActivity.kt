@@ -15,8 +15,8 @@ import com.example.tiltok_xsb.databinding.ActivityVideoPlayBinding
 import com.example.tiltok_xsb.data.model.VideoBean
 import com.example.tiltok_xsb.ui.adapter.VideoPlayAdapter
 import com.example.tiltok_xsb.ui.fragment.CommentDialog
-import com.example.tiltok_xsb.ui.viewmodel.CommentViewModel
-import com.example.tiltok_xsb.ui.viewmodel.VideoPlayViewModel
+import com.example.tiltok_xsb.viewmodel.CommentViewModel
+import com.example.tiltok_xsb.viewmodel.VideoPlayViewModel
 import com.example.tiltok_xsb.utils.FullScreenUtil
 import com.example.tiltok_xsb.utils.Resource
 import com.example.tiltok_xsb.utils.VideoPlayTouchHelper

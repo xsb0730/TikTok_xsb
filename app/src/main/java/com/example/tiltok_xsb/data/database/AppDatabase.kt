@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [CommentEntity::class],
-    version = 1,
+    entities = [CommentEntity::class], // 登记表：告诉数据库有哪些表
+    version = 1,                       // 版本号：数据库结构变更时要升级这个数字
     exportSchema = false
 )
 @TypeConverters(UserBeanConverter::class)
