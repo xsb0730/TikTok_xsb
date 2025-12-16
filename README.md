@@ -59,44 +59,55 @@ DataSource (本地数据库)
 
 ```
 app/src/main/java/com/example/tiltok_xsb/
-├── ui/                          # UI 层
-│   ├── activity/                # Activity
+├── ui/                          
+│   ├── activity/                
 │   │   ├── MainActivity         # 主页面
 │   │   └── VideoPlayActivity    # 视频播放页
-│   ├── fragment/                # Fragment
+│   ├── fragment/                
 │   │   ├── RecommendFragment    # 推荐页（双列流）
 │   │   ├── PersonalHomeFragment # 个人主页
+│   │   ├── MainFragment         # app首页
+│   │   ├── PersonalLikeFragment # 个人主页喜欢页
+│   │   ├── AvatarChooseDialog   # 头像选择弹窗
 │   │   └── CommentDialog        # 评论弹窗
-│   ├── adapter/                 # 适配器
-│   │   ├── VideoPlayAdapter     # 视频播放适配器
-│   │   ├── SameCityVideoAdapter # 双列流适配器
-│   │   └── CommentAdapter       # 评论列表适配器
-│   ├── view/                    # 自定义 View
-│   │   ├── LikeAnimationView    # 点赞动画视图
-│   │   ├── CircleImageView      # 圆形头像
-│   │   └── IconFontTextView     # 图标字体
-│   └── viewmodel/               # ViewModel
-│       ├── VideoPlayViewModel   # 视频播放业务逻辑
-│       ├── RecommendViewModel   # 推荐页业务逻辑
-│       ├── CommentViewModel     # 评论系统业务逻辑
-│       └── PersonalHomeViewModel# 个人主页业务逻辑
-├── data/                        # 数据层
-│   ├── model/                   # 数据模型
+│   ├── adapter/                 
+│   │   ├── VideoPlayAdapter             # 视频播放适配器
+│   │   ├── SameCityVideoAdapter         # 同城双列流适配器
+│   │   ├── GridVideoAdapter             # 推荐双列流适配器
+│   │   ├── PersonalHomePagerAdapter     # 个人主页适配器
+│   │   ├── LikeVideoGridAdapter         # 个人主页喜欢三列流适配器
+│   │   └── CommentAdapter               # 评论列表适配器
+│   └── view/                    
+│       ├── LikeAnimationView    # 点赞动画视图
+│       ├── CircleImageView      # 圆形头像
+│       ├── MarqueeTextView      # 跑马灯文本视图
+│       └── IconFontTextView     # 图标字体
+├── data/                        
+│   ├── model/                   
 │   │   ├── VideoBean            # 视频实体
 │   │   ├── UserBean             # 用户实体
+│   │   ├── UserInfo             # tiktok用户实体
 │   │   └── CommentBean          # 评论实体
-│   ├── repository/              # 数据仓库
+│   ├── repository/              
 │   │   ├── VideoRepository      # 视频数据仓库
 │   │   ├── CommentRepository    # 评论数据仓库
 │   │   └── UserRepository       # 用户数据仓库
-│   └── database/                # 数据库
+│   └── database/                # 评论数据库
 │       ├── AppDatabase          # Room 数据库
 │       ├── CommentDao           # 评论 DAO
+│       ├── UserBeanConverter    # 类型转换器
 │       └── CommentEntity        # 评论实体
-└── utils/                       # 工具类
-    ├── AnimUtils                # 动画工具
-    ├── VideoPlayTouchHelper     # 触摸手势处理
-    └── ImageUtils               # 图片处理工具
+├── utils/                       
+│   ├── AnimUtils                # 动画工具
+│   ├── VideoPlayTouchHelper     # 触摸手势处理
+│   ├── FullScreenUtil           # 全屏播放处理
+│   ├── Resource                 # 数据状态封装
+│   └── ImageUtils               # 图片处理工具
+└── viewmodel/               
+    ├── VideoPlayViewModel       # 视频播放业务逻辑
+    ├── RecommendViewModel       # 推荐页业务逻辑
+    ├── CommentViewModel         # 评论系统业务逻辑
+    └── PersonalHomeViewModel    # 个人主页业务逻辑
 ```
 
 ## 核心功能
@@ -140,4 +151,4 @@ app/src/main/java/com/example/tiltok_xsb/
 
 **开发者**: 重庆邮电大学-肖思博  
 **项目**: 2025届字节跳动客户端训练营  
-**更新时间**: 2025-12-11
+**更新时间**: 2025-12-16
